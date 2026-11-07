@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { chooseColumn } from '@/lib/fire-water/ai';
+import type { AiReply } from '@/lib/fire-water/ai.worker';
 import { initialMatch, isAiTurn, matchReducer } from '@/lib/fire-water/match';
 import { COLUMNS, SIZE, dropCell, stackHeight } from '@/lib/fire-water/rules';
 import type { Mode, Player } from '@/lib/game/types';
@@ -19,19 +20,62 @@ const NAME: Record<Player, string> = { X: 'Fire', O: 'Water' };
 export default function FireWaterGame() {
   const [match, dispatch] = useReducer(matchReducer, undefined, () => initialMatch());
   const [noGL, setNoGL] = useState(false);
+  const requestId = useRef(0);
   const { game, mode, difficulty, scores } = match;
   const ai = mode === 'ai';
   const aiTurn = isAiTurn(match);
 
-  // Computer move after a short "thinking" pause; the cleanup cancels it on reset / mode change.
+  // The search runs in a worker, created on the computer's first turn (2-player games never load it). Without
+  // worker support it falls back to the main thread.
+  const worker = useRef<Worker | null | undefined>(undefined);
+  const getWorker = useCallback(() => {
+    if (worker.current === undefined) {
+      try {
+        worker.current = new Worker(new URL('../lib/fire-water/ai.worker.ts', import.meta.url), { type: 'module' });
+      } catch {
+        worker.current = null;
+      }
+    }
+    return worker.current;
+  }, []);
+  useEffect(
+    () => () => {
+      worker.current?.terminate();
+      worker.current = undefined;
+    },
+    [],
+  );
+
+  // Computer move after at least a short "thinking" pause; the cleanup cancels it on reset / mode change.
   useEffect(() => {
     if (!aiTurn) return;
-    const timer = setTimeout(() => {
-      const col = chooseColumn(game, difficulty);
-      if (col >= 0) dispatch({ type: 'play', col, source: 'ai' });
-    }, AI_DELAY_MS);
-    return () => clearTimeout(timer);
-  }, [aiTurn, game, difficulty]);
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const started = performance.now();
+    const play = (col: number) => {
+      if (cancelled || col < 0) return;
+      timer = setTimeout(() => dispatch({ type: 'play', col, source: 'ai' }), Math.max(0, AI_DELAY_MS - (performance.now() - started)));
+    };
+    const w = getWorker();
+    if (w) {
+      const id = ++requestId.current;
+      const onReply = (e: MessageEvent<AiReply>) => {
+        if (e.data.id === id) play(e.data.col);
+      };
+      w.addEventListener('message', onReply);
+      w.postMessage({ id, state: game, difficulty });
+      return () => {
+        cancelled = true;
+        clearTimeout(timer);
+        w.removeEventListener('message', onReply);
+      };
+    }
+    timer = setTimeout(() => play(chooseColumn(game, difficulty)), AI_DELAY_MS);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [aiTurn, game, difficulty, getWorker]);
 
   const play = useCallback((col: number) => dispatch({ type: 'play', col, source: 'human' }), []);
   const onUnsupported = useCallback(() => setNoGL(true), []);

@@ -10,13 +10,25 @@ const WIN = 1_000_000;
 /** Scores this close to WIN mean a forced result: searching deeper cannot change the decision. */
 const FORCED = WIN - 1_000;
 const MAX_DEPTH = 16;
-const MAX_NODES = 30_000;
+/**
+ * Reaches 6–7 plies, ~0.5–1 s per move on a laptop (the game runs it in a worker, so the scene keeps moving).
+ * Self-play: 100k already beats the old 30k budget 19–1 and more breaks even, but 100k stops at 5 plies on the
+ * opening, where ending on its own move makes stacking on a centre opening look good again; 300k reaches 6.
+ */
+const MAX_NODES = 300_000;
 /**
  * Value of a line by the number of pieces on it, when the opponent has none there. Twos are weighted heavily
  * on purpose: killing them early is what prevents double threats beyond the horizon. Tuned by self-play;
  * with 0, 1, 8, 50 the search only broke even against the Medium scorer.
  */
 const LINE_VALUE = [0, 1, 20, 120];
+/**
+ * Lines count less the higher their cells sit (each level halves a cell's share): low cells can be played soon,
+ * high ones need the columns filled first. Without this the search answered a centre opening by stacking on it,
+ * which loses by force within three moves (24 of 625 centre lines lost that early; 0 with the weighting).
+ */
+const HEIGHT_DECAY = 0.5;
+const LINE_WEIGHT = LINES.map((line) => line.reduce((sum, c) => sum + HEIGHT_DECAY ** Math.floor(c / COLUMNS), 0) / line.length);
 
 type Side = 0 | 1;
 
@@ -48,8 +60,8 @@ class Search {
     const mine = this.counts[side], theirs = this.counts[1 - side], sign = side === 0 ? 1 : -1;
     for (const id of CELL_LINES[cell]) {
       const a = mine[id], b = theirs[id];
-      if (b === 0) this.score += sign * (LINE_VALUE[a + 1 === WIN_LENGTH ? a : a + 1] - LINE_VALUE[a]);
-      else if (a === 0) this.score += sign * LINE_VALUE[b]; // this piece kills the opponent's line
+      if (b === 0) this.score += sign * LINE_WEIGHT[id] * (LINE_VALUE[a + 1 === WIN_LENGTH ? a : a + 1] - LINE_VALUE[a]);
+      else if (a === 0) this.score += sign * LINE_WEIGHT[id] * LINE_VALUE[b]; // this piece kills the opponent's line
       mine[id] = a + 1;
     }
   }

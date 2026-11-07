@@ -44,7 +44,7 @@
 - **F3.2** Easy: 35% đi ngẫu nhiên, còn lại chấm điểm theo đường còn sống, không nhìn ô phía trên. Người mới thắng được.
 - **F3.3** Medium: luôn thắng ngay nếu có thể, nếu không thì chặn; tránh làm lộ ô phía trên để đối thủ thắng; kèm nhiễu nhỏ để mỗi ván một khác.
 - **F3.4** Hard: tìm kiếm alpha-beta nhiều nước, thấy được bẫy hai đường, thắng áp đảo Medium khi tự đấu.
-- **F3.5** Mỗi nước của Hard không vượt quá 300 ms để không làm giật cảnh 3D; có giới hạn theo số nút nên kết quả không phụ thuộc tốc độ máy.
+- **F3.5** Máy tính nghĩ trong Web Worker nên cảnh 3D không bao giờ bị giật dù Hard nghĩ lâu (khoảng 0,5–1 s mỗi nước, sâu 6–7 nước); có giới hạn theo số nút nên kết quả không phụ thuộc tốc độ máy. Hard không được thua chắc chỉ sau 3 nước khi Fire mở ở ô giữa.
 
 ## F4 — Cảnh 3D & giao diện
 

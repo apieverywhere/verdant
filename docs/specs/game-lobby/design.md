@@ -24,7 +24,8 @@ Chỉ số ô: `i = x + 5·z + 25·y`, chỉ số cột: `col = x + 5·z`. Dùng
 
 - `rules.ts` — engine thuần: `createGame`, `applyMove(state, col)`, `dropCell`, `stackHeight`, bảng `LINES` và `CELL_LINES`.
 - `ai.ts` — `chooseColumn(state, difficulty, random)`: Easy và Medium chấm điểm một lớp theo thiết kế, Hard gọi `search.ts`.
-- `search.ts` — negamax + alpha-beta, đào sâu dần trong giới hạn số nút; đếm quân theo từng đường để cập nhật lượng giá và phát hiện thắng tăng dần thay vì quét 302 đường mỗi nút. Thắng ngay và chặn bắt buộc được xử lý trước khi rẽ nhánh.
+- `search.ts` — negamax + alpha-beta, đào sâu dần trong giới hạn số nút; đếm quân theo từng đường để cập nhật lượng giá và phát hiện thắng tăng dần thay vì quét 302 đường mỗi nút. Thắng ngay và chặn bắt buộc được xử lý trước khi rẽ nhánh. Đường càng cao càng nhẹ ký (mỗi tầng giảm một nửa) vì ô trên cao chỉ đi được khi cột bên dưới đã đầy.
+- `ai.worker.ts` — chạy `chooseColumn` trong Web Worker; `FireWaterGame` gửi thế cờ, chờ ít nhất 650 ms “đang nghĩ” rồi mới đi. Trình duyệt không có Worker thì tính trên luồng chính.
 - `match.ts` — reducer trận, cùng hình dạng action với caro.
 
 ## 3. Cảnh 3D

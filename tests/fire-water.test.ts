@@ -241,6 +241,11 @@ describe('F3.4 — hard computer player', () => {
     const s: FireWaterState = { ...createGame(), board, turn: 'O', moveCount: 6 };
     expect(chooseColumn(s, 'hard', noNoise)).not.toBe(3);
   });
+
+  test('does not answer a centre opening by stacking on it', () => {
+    // Stacking on the centre lost by force three moves later (centre, stack, X at 16, O at 8, X at 17: X wins).
+    for (const roll of [0, 0.5, 0.99]) expect(chooseColumn(moves([12]), 'hard', () => roll)).not.toBe(12);
+  });
 });
 
 describe('F3 — strength order', () => {
@@ -250,5 +255,5 @@ describe('F3 — strength order', () => {
 
   test('hard clearly beats medium', () => {
     expect(series('hard', 'medium', 20)).toBeGreaterThanOrEqual(15);
-  }, 120_000);
+  }, 300_000); // ~2 min: Hard searches 300k nodes per move
 });

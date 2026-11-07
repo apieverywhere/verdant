@@ -110,17 +110,8 @@ const SOCIAL: { label: string; icon: ReactNode }[] = [
   },
 ];
 
-const LEGAL_LINKS = [
-  'Terms of Service',
-  'Privacy Policy',
-  'Parent’s Guide',
-  'Safe and Fair Play Policy',
-  'Accessibility Statement',
-  'Other Legal Docs',
-  'Media Center',
-  'Our Domains',
-  'Manage Cookies',
-];
+/** A free browser game with no accounts only needs its terms and privacy policy. */
+const LEGAL_LINKS = ['Terms of Service', 'Privacy Policy'];
 
 const Logo = ({ size, bg, fg }: { size: number; bg: string; fg: string }) => (
   <svg width={size} height={size} viewBox="0 0 34 34" fill="none" aria-hidden="true">

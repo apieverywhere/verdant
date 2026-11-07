@@ -221,7 +221,7 @@ try {
     check(`old address ${from} redirects to ${to}`, res.status() === 308 && (res.headers().location ?? '').endsWith(to), `${res.status()} ${res.headers().location}`);
   }
   await firstVisit.close();
-  check('footer: 5 social links and 9 legal links', (await page.getByRole('navigation', { name: 'Social media' }).getByRole('link').count()) === 5 && (await page.getByRole('navigation', { name: 'Legal and site links' }).getByRole('link').count()) === 9);
+  check('footer: 5 social links and 2 legal links', (await page.getByRole('navigation', { name: 'Social media' }).getByRole('link').count()) === 5 && (await page.getByRole('navigation', { name: 'Legal and site links' }).getByRole('link').count()) === 2);
   await phone.goto(URL, { waitUntil: 'networkidle' });
   check('lobby: no horizontal scroll at 390px', !(await phone.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)));
   await phone.screenshot({ path: `${SHOTS}/8-lobby-mobile.png`, fullPage: true });
