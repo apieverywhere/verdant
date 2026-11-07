@@ -194,7 +194,8 @@ try {
   check('lobby lists both games', (await page.locator('.game-card').count()) === 2);
   check('lobby: call to action with the mascot', await page.getByRole('heading', { name: 'Interested in working with us?' }).isVisible() && (await page.locator('.lobby-cta-art img').evaluate((i: HTMLImageElement) => i.complete && i.naturalWidth > 0)));
   await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'About' }).click();
-  await page.waitForTimeout(400);
+  // Anchor links scroll smoothly; wait for the glide to bring the mascot into view.
+  await page.waitForFunction(() => { const t = document.querySelector('.lobby-cta-art img')!.getBoundingClientRect().top; return t >= 0 && t < 200; }, null, { timeout: 4000 }).catch(() => {});
   const mascotTop = await page.locator('.lobby-cta-art img').evaluate((i) => i.getBoundingClientRect().top);
   check('About scrolls to the banner with the whole mascot in view', mascotTop >= 0 && mascotTop < 200, `mascot top at ${Math.round(mascotTop)}px`);
   await page.screenshot({ path: `${SHOTS}/7b-lobby-about.png` });
@@ -266,6 +267,8 @@ try {
   // One 3D scene at a time: software-rendering two at once starves the browser and actions time out.
   await page.goto('about:blank');
   await phone.goto(`${URL}/ember-and-tide`, { waitUntil: 'networkidle' });
+  check('phone: toolbar hidden until Settings is tapped', !(await phone.getByRole('button', { name: 'vs Computer' }).isVisible()));
+  await phone.getByRole('button', { name: 'Settings' }).click();
   await phone.getByRole('button', { name: 'vs Computer' }).click();
   await phone.waitForTimeout(1000);
   check('ember & tide: no horizontal scroll at 390px', !(await phone.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)));

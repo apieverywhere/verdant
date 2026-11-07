@@ -1,6 +1,8 @@
+'use client';
+
 /** HUD pieces shared by every game page; colours come from CSS variables so each scene can theme them. */
 import Link from 'next/link';
-import type { ReactNode } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import type { Difficulty, Mode } from '@/lib/game/types';
 
 const DIFFICULTIES: { id: Difficulty; label: string }[] = [
@@ -79,27 +81,44 @@ interface ToolbarProps {
   children?: ReactNode;
 }
 
+/** On phones the toolbar collapses behind a bottom “Settings” tab; on wider screens it is always shown. */
 export function Toolbar({ mode, onMode, onNewGame, onResetScores, children }: ToolbarProps) {
+  const [open, setOpen] = useState(false);
+  const panelId = useId();
   return (
-    <div className="panel toolbar">
-      <div role="group" aria-label="Game mode" className="segmented">
-        <button type="button" className="cbtn seg" aria-pressed={mode === 'pvp'} onClick={() => onMode('pvp')}>
-          2 players
+    <div className="toolbar-wrap" data-open={open || undefined}>
+      <div id={panelId} className="panel toolbar">
+        <div role="group" aria-label="Game mode" className="segmented">
+          <button type="button" className="cbtn seg" aria-pressed={mode === 'pvp'} onClick={() => onMode('pvp')}>
+            2 players
+          </button>
+          <button type="button" className="cbtn seg" aria-pressed={mode === 'ai'} onClick={() => onMode('ai')}>
+            vs Computer
+          </button>
+        </div>
+        {children}
+        <button type="button" className="cbtn primary" onClick={() => { onNewGame(); setOpen(false); }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M20 11a8 8 0 1 0-2.3 5.7" />
+            <path d="M20 4v7h-7" />
+          </svg>
+          New game
         </button>
-        <button type="button" className="cbtn seg" aria-pressed={mode === 'ai'} onClick={() => onMode('ai')}>
-          vs Computer
+        <button type="button" className="cbtn ghost" onClick={onResetScores}>
+          Reset score
         </button>
       </div>
-      {children}
-      <button type="button" className="cbtn primary" onClick={onNewGame}>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M20 11a8 8 0 1 0-2.3 5.7" />
-          <path d="M20 4v7h-7" />
+      <button
+        type="button"
+        className="cbtn toolbar-toggle"
+        aria-expanded={open}
+        aria-controls={panelId}
+        onClick={() => setOpen((o) => !o)}
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d={open ? 'M6 9l6 6 6-6' : 'M6 15l6-6 6 6'} />
         </svg>
-        New game
-      </button>
-      <button type="button" className="cbtn ghost" onClick={onResetScores}>
-        Reset score
+        Settings
       </button>
     </div>
   );
