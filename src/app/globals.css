@@ -103,6 +103,8 @@ html, body {
 }
 
 .title-card { padding: 14px 20px; display: flex; flex-direction: column; gap: 2px; }
+.title-body { display: flex; flex-direction: column; gap: 2px; }
+.title-back { display: none; }
 .back-link {
   display: inline-flex;
   align-items: center;
@@ -575,10 +577,19 @@ html, body {
 
 @media (max-width: 640px) {
   .hud { padding: 16px; gap: 10px; }
-  .title-card { padding: 10px 14px; }
-  .title-card h1 { font-size: 21px; }
-  .scoreboard { padding: 8px 12px; gap: 10px; }
-  .score { min-width: 48px; }
+  /* Phones: the title card is just a round back-arrow link; the title stays for screen readers. */
+  .title-card { padding: 0; border-radius: 50%; border-color: rgba(255, 210, 122, 0.6); }
+  .title-body > :not(h1) { display: none; }
+  .title-body h1 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .title-back { display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 50%; color: var(--gold); }
+  .title-back:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  /* One row: back · scoreboard · help, at any phone width. */
+  .hud-top { flex-wrap: nowrap; gap: 8px; }
+  .title-card { flex: none; }
+  .hud-top-right { min-width: 0; gap: 8px; }
+  .scoreboard { min-width: 0; padding: 8px 10px; gap: 8px; }
+  .score { min-width: 44px; }
+  .score-label { font-size: 11px; white-space: nowrap; }
   .score-value { font-size: 22px; }
   .help-body { padding: 18px; }
   .lobby .lobby-cta-copy h2 { font-size: 30px; }

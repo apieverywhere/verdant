@@ -185,6 +185,19 @@ try {
   await phone.waitForTimeout(1000);
   const overflow = await phone.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
   check('no horizontal scroll at 390px', !overflow);
+  // The top HUD (back · scoreboard · help) must stay on one row on narrow phones, against the computer too.
+  await phone.getByRole('button', { name: 'Settings' }).click();
+  await phone.getByRole('button', { name: 'vs Computer' }).click();
+  for (const width of [390, 375, 360, 320]) {
+    await phone.setViewportSize({ width, height: 700 });
+    await phone.waitForTimeout(150);
+    const tops = await Promise.all(['.title-back', '.scoreboard', '.help-btn'].map((sel) => phone.locator(sel).evaluate((e) => Math.round(e.getBoundingClientRect().top))));
+    const fits = !(await phone.evaluate(() => document.documentElement.scrollWidth > window.innerWidth));
+    check(`phone ${width}px: back, score and help share one row`, Math.max(...tops) - Math.min(...tops) <= 12 && fits, tops.join(','));
+  }
+  await phone.setViewportSize({ width: 375, height: 667 });
+  await phone.screenshot({ path: `${SHOTS}/6b-mobile-vs-ai.png` });
+  await phone.setViewportSize({ width: 390, height: 844 });
   await phone.screenshot({ path: `${SHOTS}/6-mobile.png` });
 
   // --- Lobby

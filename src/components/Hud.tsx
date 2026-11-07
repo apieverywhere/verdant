@@ -11,12 +11,20 @@ const DIFFICULTIES: { id: Difficulty; label: string }[] = [
   { id: 'hard', label: 'Khó' },
 ];
 
+/** On phones the card shrinks to a round back-arrow link to the lobby; the title stays for screen readers. */
 export function TitleCard({ title, subtitle }: { title: string; subtitle: string }) {
   return (
     <div className="panel title-card">
-      <Link className="back-link" href="/">← Verdant</Link>
-      <h1>{title}</h1>
-      <p>{subtitle}</p>
+      <Link className="title-back" href="/" aria-label="Back to Verdant">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M19 12H5M11 6l-6 6 6 6" />
+        </svg>
+      </Link>
+      <div className="title-body">
+        <Link className="back-link" href="/">← Verdant</Link>
+        <h1>{title}</h1>
+        <p>{subtitle}</p>
+      </div>
     </div>
   );
 }
