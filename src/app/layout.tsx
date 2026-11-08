@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Be_Vietnam_Pro } from 'next/font/google';
+import { Analytics } from '@vercel/analytics/next';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import { AdBreakInit, AdsHeadTag } from '@/components/Ads';
 import './globals.css';
 
@@ -34,6 +36,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         {children}
         <AdBreakInit />
+        {/* Vercel Web Analytics (page views) and Speed Insights (Core Web Vitals); no-ops outside Vercel. */}
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

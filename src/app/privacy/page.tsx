@@ -33,6 +33,13 @@ export default function PrivacyPage() {
           only in the open page and are gone when you close it.
         </p>
 
+        <h2>Visit statistics</h2>
+        <p>
+          To see which pages are visited and how fast they load, the site uses Vercel Web Analytics and Speed Insights.
+          They use no cookies and do not identify you: they count page views and measure loading speed, together with
+          general details such as country, browser and device type.
+        </p>
+
         {adsEnabled && (
           <>
             <h2>Advertising and cookies</h2>
