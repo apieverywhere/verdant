@@ -4,7 +4,10 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import tano from '@/assets/tano.png';
 import { GAMES, type GameId } from '@/lib/games';
+import { LOBBY_SLOT } from '@/lib/ads';
+import { AdSlot } from './Ads';
 import PlayRecentLink from './PlayRecentLink';
+import { SiteFooter, SiteHeader } from './SiteChrome';
 
 const XMark = ({ size = 34 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#ff6f5e" strokeWidth="3.6" strokeLinecap="round" aria-hidden="true">
@@ -64,79 +67,11 @@ const CARDS: Record<GameId, { description: string; tags: string[]; art: ReactNod
   },
 };
 
-/** Social and legal destinations are not decided yet: every href is a placeholder to fill in. */
-const SOCIAL: { label: string; icon: ReactNode }[] = [
-  {
-    label: 'YouTube',
-    icon: (
-      <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor" fillRule="evenodd" aria-hidden="true">
-        <path d="M23 7.2a3 3 0 0 0-2.1-2.1C19 4.6 12 4.6 12 4.6s-7 0-8.9.5A3 3 0 0 0 1 7.2 31 31 0 0 0 .5 12 31 31 0 0 0 1 16.8a3 3 0 0 0 2.1 2.1c1.9.5 8.9.5 8.9.5s7 0 8.9-.5a3 3 0 0 0 2.1-2.1 31 31 0 0 0 .5-4.8 31 31 0 0 0-.5-4.8zM9.75 15.02V8.98L15.5 12z" />
-      </svg>
-    ),
-  },
-  {
-    label: 'Facebook',
-    icon: (
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-        <path d="M22 12a10 10 0 1 0-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.78-3.89 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.44 2.89h-2.34v6.99A10 10 0 0 0 22 12z" />
-      </svg>
-    ),
-  },
-  {
-    label: 'Instagram',
-    icon: (
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
-        <rect x="2.5" y="2.5" width="19" height="19" rx="5.5" />
-        <circle cx="12" cy="12" r="4.3" />
-        <circle cx="17.6" cy="6.4" r="1" fill="currentColor" stroke="none" />
-      </svg>
-    ),
-  },
-  {
-    label: 'X (Twitter)',
-    icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-        <path d="M18.9 2H22l-7.5 8.6L23.3 22h-6.9l-5.4-7-6.2 7H1.7l8-9.2L1.3 2h7l4.9 6.4zm-1.2 18h1.9L7.4 4H5.4z" />
-      </svg>
-    ),
-  },
-  {
-    label: 'LinkedIn',
-    icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-        <path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46zM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13zM7.12 20.45H3.56V9h3.56zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z" />
-      </svg>
-    ),
-  },
-];
-
-/** A free browser game with no accounts only needs its terms and privacy policy. */
-const LEGAL_LINKS = ['Terms of Service', 'Privacy Policy'];
-
-const Logo = ({ size, bg, fg }: { size: number; bg: string; fg: string }) => (
-  <svg width={size} height={size} viewBox="0 0 34 34" fill="none" aria-hidden="true">
-    <rect x="1" y="1" width="32" height="32" rx="9" fill={bg} />
-    <path d="M9 9l7 7M16 9l-7 7" stroke={fg} strokeWidth="2.6" strokeLinecap="round" />
-    <circle cx="22" cy="22" r="4.2" stroke={fg} strokeWidth="2.6" />
-  </svg>
-);
 
 export default function Lobby() {
   return (
     <div className="lobby">
-      <header className="lobby-header">
-        <div className="lobby-bar">
-          <Link className="lobby-logo" href="/">
-            <Logo size={34} bg="#ffd27a" fg="#241a3a" />
-            <span>Verdant</span>
-          </Link>
-          <nav className="lobby-nav" aria-label="Main navigation">
-            <a href="#games">Games</a>
-            <a href="#about">About</a>
-            <PlayRecentLink className="cta" />
-          </nav>
-        </div>
-      </header>
+      <SiteHeader home />
 
       <main>
         <section className="lobby-section hero">
@@ -204,12 +139,35 @@ export default function Lobby() {
           </div>
         </section>
 
+        <section id="about" className="lobby-section about" aria-labelledby="about-title">
+          <h2 id="about-title">Verdant</h2>
+          <div className="about-copy">
+            <p>
+              Verdant is a small collection of relaxing games for students, university students and office workers: a
+              place to unwind with friends after hours of classes, exams or meetings. Every round takes just a few
+              minutes, so it fits into a lunch break, the gap between lectures or the end of a long day.
+            </p>
+            <p>
+              The games open straight in your browser, on a laptop or a phone. There is nothing to install, no account
+              to create and nothing to pay. Sit next to a friend and take turns on the same screen, or play against the
+              computer on Dễ, Trung bình or Khó when you are on your own.
+            </p>
+            <p>
+              I build Verdant on my own and add new games over time. If you have an idea, feedback or just want to say
+              hello, my social links are at the bottom of the page.
+            </p>
+          </div>
+        </section>
+
+        <div className="lobby-section">
+          <AdSlot slot={LOBBY_SLOT} />
+        </div>
       </main>
 
-      <section id="about" className="lobby-cta" aria-labelledby="cta-title">
+      <section className="lobby-cta" aria-labelledby="cta-title">
         <div className="lobby-cta-inner">
           <div className="lobby-cta-copy">
-            <h2 id="cta-title">Interested in working with us?</h2>
+            <h2 id="cta-title">Interested in working with me?</h2>
             <a className="cta-white" href="#">Connect now</a>
           </div>
           <div className="lobby-cta-art">
@@ -218,35 +176,7 @@ export default function Lobby() {
         </div>
       </section>
 
-      <footer className="lobby-footer">
-        <div className="lobby-footer-inner">
-          <div className="footer-follow">
-            <p>Follow us on</p>
-            <nav aria-label="Social media" className="footer-social">
-              {SOCIAL.map((s) => (
-                <a key={s.label} href="#" aria-label={s.label}>{s.icon}</a>
-              ))}
-            </nav>
-          </div>
-
-          <div className="footer-rule" />
-
-          <nav aria-label="Legal and site links" className="footer-links">
-            {LEGAL_LINKS.map((label) => <a key={label} href="#">{label}</a>)}
-          </nav>
-
-          <div className="footer-bottom">
-            <span className="footer-copy">© 2026 Verdant</span>
-            <div className="footer-end">
-              <a className="footer-sitemap" href="#">Sitemap</a>
-              <Link className="footer-brand" href="/" aria-label="Verdant home">
-                <Logo size={40} bg="#ffffff" fg="#08192a" />
-                <span>Verdant</span>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

@@ -10,7 +10,7 @@
 - **L1.3** Từ mỗi trang game có liên kết “← Verdant” quay về `/`.
 - **L1.4** Sảnh dùng được ở chiều rộng 390 px, không cuộn ngang; vùng bấm tối thiểu 44 px.
 - **L1.5** Chuyển qua lại giữa các trang nhiều lần không được làm rò rỉ WebGL context.
-- **L1.6** Cuối sảnh có băng CTA “Interested in working with us?” với linh vật Tano và footer đen: mạng xã hội, link pháp lý, bản quyền, Sitemap, logo Verdant. Đích của các link chưa có nên tạm là `#`.
+- **L1.6** Cuối sảnh có băng CTA “Interested in working with me?” với linh vật Tano và footer đen: mạng xã hội, link Terms of Service (`/terms`) và Privacy Policy (`/privacy`), bản quyền, Sitemap (`/sitemap`), logo Verdant. Chữ trên site xưng ngôi thứ nhất số ít (I / me / my). Sitemap chỉ liệt kê trang đã có; link mạng xã hội chưa có đích nên tạm là `#`.
 - **L1.7** Nút “Play now” ở header và nút Play ở hero đưa tới game chơi gần nhất trên trình duyệt này (nút hero ghi “Play <tên game>”); chưa chơi game nào thì tới game mặc định Lantern Line.
 
 ## L2 — Caro 3×3 trong hệ sinh thái

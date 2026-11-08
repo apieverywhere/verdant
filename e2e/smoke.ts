@@ -205,12 +205,13 @@ try {
   await page.screenshot({ path: `${SHOTS}/7-lobby.png`, fullPage: true });
   check('lobby title', (await page.title()) === 'Verdant');
   check('lobby lists both games', (await page.locator('.game-card').count()) === 2);
-  check('lobby: call to action with the mascot', await page.getByRole('heading', { name: 'Interested in working with us?' }).isVisible() && (await page.locator('.lobby-cta-art img').evaluate((i: HTMLImageElement) => i.complete && i.naturalWidth > 0)));
+  check('lobby: call to action with the mascot', await page.getByRole('heading', { name: 'Interested in working with me?' }).isVisible() && (await page.locator('.lobby-cta-art img').evaluate((i: HTMLImageElement) => i.complete && i.naturalWidth > 0)));
   await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'About' }).click();
-  // Anchor links scroll smoothly; wait for the glide to bring the mascot into view.
-  await page.waitForFunction(() => { const t = document.querySelector('.lobby-cta-art img')!.getBoundingClientRect().top; return t >= 0 && t < 200; }, null, { timeout: 4000 }).catch(() => {});
-  const mascotTop = await page.locator('.lobby-cta-art img').evaluate((i) => i.getBoundingClientRect().top);
-  check('About scrolls to the banner with the whole mascot in view', mascotTop >= 0 && mascotTop < 200, `mascot top at ${Math.round(mascotTop)}px`);
+  // Anchor links scroll smoothly; wait for the glide to bring the About section to the top.
+  await page.waitForFunction(() => { const t = document.querySelector('#about')!.getBoundingClientRect().top; return t >= 0 && t < 120; }, null, { timeout: 4000 }).catch(() => {});
+  const aboutTop = await page.locator('#about').evaluate((e) => e.getBoundingClientRect().top);
+  check('About scrolls to the About section', aboutTop >= 0 && aboutTop < 120, `section top at ${Math.round(aboutTop)}px`);
+  check('About section introduces the site', (await page.locator('#about p').count()) >= 3);
   await page.screenshot({ path: `${SHOTS}/7b-lobby-about.png` });
   check('lobby: no feature cards, no “Coming soon” nav link', (await page.locator('.feature').count()) === 0 && (await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Coming soon' }).count()) === 0);
   const firstVisit = await browser.newPage();
@@ -221,7 +222,26 @@ try {
     check(`old address ${from} redirects to ${to}`, res.status() === 308 && (res.headers().location ?? '').endsWith(to), `${res.status()} ${res.headers().location}`);
   }
   await firstVisit.close();
-  check('footer: 5 social links and 2 legal links', (await page.getByRole('navigation', { name: 'Social media' }).getByRole('link').count()) === 5 && (await page.getByRole('navigation', { name: 'Legal and site links' }).getByRole('link').count()) === 2);
+  check('footer: 3 social links and 2 legal links', (await page.getByRole('navigation', { name: 'Social media' }).getByRole('link').count()) === 3 && (await page.locator('.footer-social a[href="#"]').count()) === 0 && (await page.getByRole('navigation', { name: 'Legal and site links' }).getByRole('link').count()) === 2);
+  // Ads are off unless NEXT_PUBLIC_ADSENSE_CLIENT is set at build time: no slot, no script, no ads.txt.
+  check('ads off by default: no ad slot or ad script', (await page.locator('.ad-slot').count()) === 0 && (await page.locator('script[src*="googlesyndication"]').count()) === 0);
+  check('ads off by default: /ads.txt is 404', (await page.request.get(`${URL}/ads.txt`)).status() === 404);
+  const sitemapXml = await (await page.request.get(`${URL}/sitemap.xml`)).text();
+  check('sitemap.xml lists every public page', ['/lantern-line', '/ember-and-tide', '/privacy', '/terms', '/sitemap'].every((p) => sitemapXml.includes(`${p}</loc>`)));
+  const robots = await (await page.request.get(`${URL}/robots.txt`)).text();
+  check('robots.txt allows crawling and points to the sitemap', robots.includes('Allow: /') && /Sitemap: https?:\/\/\S+\/sitemap\.xml/.test(robots), robots.replace(/\n/g, ' | '));
+  await page.getByRole('navigation', { name: 'Legal and site links' }).getByRole('link', { name: 'Privacy Policy' }).click();
+  await page.waitForURL('**/privacy');
+  check('privacy policy page', (await page.getByRole('heading', { level: 1 }).innerText()) === 'Privacy Policy');
+  await page.goto(URL, { waitUntil: 'networkidle' });
+  await page.getByRole('navigation', { name: 'Legal and site links' }).getByRole('link', { name: 'Terms of Service' }).click();
+  await page.waitForURL('**/terms');
+  check('terms of service page', (await page.getByRole('heading', { level: 1 }).innerText()) === 'Terms of Service');
+  await page.goto(URL, { waitUntil: 'networkidle' });
+  await page.locator('.footer-sitemap').click();
+  await page.waitForURL('**/sitemap');
+  check('sitemap page: 3 sections, no placeholder links', (await page.locator('.sitemap-card').count()) === 3 && (await page.locator('.sitemap a[href="#"]').count()) === 0 && (await page.locator('.sitemap-card a[href="/ember-and-tide"]').count()) === 1);
+  await page.goto(URL, { waitUntil: 'networkidle' });
   await phone.goto(URL, { waitUntil: 'networkidle' });
   check('lobby: no horizontal scroll at 390px', !(await phone.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)));
   await phone.screenshot({ path: `${SHOTS}/8-lobby-mobile.png`, fullPage: true });

@@ -519,8 +519,7 @@ html, body {
 
 
 /* Call to action band: the mascot overflows the band upwards, hence the top margin. */
-/* scroll-margin keeps the mascot in view when the About link scrolls here. */
-.lobby-cta { scroll-margin-top: 140px; margin-top: 130px; background: linear-gradient(180deg, #2753c2 0%, #2f78e6 100%); }
+.lobby-cta { margin-top: 130px; background: linear-gradient(180deg, #2753c2 0%, #2f78e6 100%); }
 .lobby-cta-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; display: flex; flex-wrap: wrap; align-items: stretch; gap: 24px; }
 .lobby-cta-copy {
   flex: 999 1 420px;
@@ -623,4 +622,49 @@ html, body {
 @media (prefers-reduced-motion: reduce) {
   .cbtn, .status .dot, .status-hint, .toolbar-wrap .toolbar, .cta, .cta-white, .game-card, .help-dots span { transition: none; animation: none; }
   .game-card:hover { transform: none; }
+}
+
+/* Ads: a labelled box with reserved height so the page does not jump when the ad loads. */
+.ad-slot { margin: 8px 24px 0; padding: 10px; border: 1px solid var(--lobby-line); border-radius: 16px; min-height: 120px; }
+.ad-label { display: block; margin-bottom: 6px; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); }
+
+/* Legal pages (privacy policy) */
+.legal { min-height: 100vh; background: #0e2333; color: var(--ink); padding: 48px 16px 64px; }
+.legal-inner { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; line-height: 1.6; font-size: 15px; }
+.legal h1 { margin: 8px 0 0; font-size: 34px; line-height: 1.15; color: var(--ink-strong); }
+.legal h2 { margin: 20px 0 0; font-size: 19px; color: var(--ink-strong); }
+.legal p, .legal ul { margin: 0; }
+.legal ul { padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.legal a:not(.back-link) { color: var(--gold-soft); }
+.legal-updated { font-size: 13px; color: var(--ink-soft); }
+
+/* Sitemap page (design: Sitemap artboard) */
+.sitemap-page { display: flex; flex-direction: column; }
+.sitemap { flex: 1 0 auto; width: 100%; max-width: 1200px; margin: 0 auto; padding: 56px 24px 80px; box-sizing: border-box; display: flex; flex-direction: column; gap: 40px; }
+.sitemap-intro { display: flex; flex-direction: column; gap: 12px; }
+.lobby .sitemap-intro h1 { font-size: 48px; line-height: 1; font-weight: 800; letter-spacing: 0.01em; text-transform: uppercase; color: #ffffff; }
+.lobby .sitemap-intro p { font-size: 17px; color: #c3d6e3; }
+.sitemap-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; }
+.sitemap-card { background: var(--lobby-card); border-radius: 16px; padding: 28px; display: flex; flex-direction: column; gap: 14px; min-height: 220px; }
+.sitemap-accent { width: 40px; height: 4px; border-radius: 2px; }
+.lobby .sitemap-card h2 { font-size: 20px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.02em; color: #f0f6fa; }
+.sitemap-card ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px; font-size: 16px; }
+.sitemap-link { color: #7cc4ff; text-decoration: none; }
+.sitemap-link:hover { color: #b5ddff; text-decoration: underline; }
+.sitemap-head { color: #f0f6fa; text-decoration: none; }
+.sitemap-head:hover { color: #ffffff; text-decoration: underline; }
+@media (max-width: 640px) {
+  .sitemap { padding: 40px 16px 56px; gap: 28px; }
+  .lobby .sitemap-intro h1 { font-size: 36px; }
+  .sitemap-grid { grid-template-columns: 1fr; }
+  .sitemap-card { min-height: 0; }
+}
+
+/* About section on the lobby */
+.about { padding: 32px 24px 8px; display: flex; flex-direction: column; align-items: center; gap: 16px; scroll-margin-top: 24px; }
+.lobby .about h2 { text-align: center; font-size: 32px; line-height: 1.15; font-weight: 800; letter-spacing: 0.01em; text-transform: uppercase; color: #ffffff; }
+.about-copy { width: 100%; max-width: 640px; display: flex; flex-direction: column; gap: 14px; }
+.lobby .about-copy p { font-size: 16px; line-height: 1.7; color: #c3d6e3; }
+@media (max-width: 640px) {
+  .lobby .about h2 { font-size: 26px; }
 }
