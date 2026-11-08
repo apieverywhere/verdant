@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Be_Vietnam_Pro } from 'next/font/google';
-import { AdsScript } from '@/components/Ads';
+import { AdBreakInit, AdsHeadTag } from '@/components/Ads';
 import './globals.css';
 
 const GOOGLE_VERIFICATION = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION?.trim();
@@ -28,9 +28,12 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={font.variable} data-scroll-behavior="smooth">
+      <head>
+        <AdsHeadTag />
+      </head>
       <body>
         {children}
-        <AdsScript />
+        <AdBreakInit />
       </body>
     </html>
   );
