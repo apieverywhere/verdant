@@ -37,12 +37,23 @@ export function Divider() {
   return <div className="divider" />;
 }
 
-export function Score({ icon, value, label, testId, narrow }: { icon: ReactNode; value: number; label: string; testId: string; narrow?: boolean }) {
+interface ScoreProps {
+  icon: ReactNode;
+  value: ReactNode;
+  label: string;
+  testId: string;
+  narrow?: boolean;
+  /** Small extra line under the label (e.g. rounds won). */
+  sub?: string;
+}
+
+export function Score({ icon, value, label, testId, narrow, sub }: ScoreProps) {
   return (
     <div className={`score${narrow ? ' narrow' : ''}`}>
       {icon}
       <span className="score-value" data-testid={testId}>{value}</span>
       <span className="score-label">{label}</span>
+      {sub && <span className="score-sub">{sub}</span>}
     </div>
   );
 }

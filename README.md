@@ -8,6 +8,7 @@ Sảnh game 3D chơi ngay trên trình duyệt. Cảnh low‑poly dựng bằng 
 | `/` | Sảnh game; nút Play now / Play ở hero đưa về game chơi gần nhất (mặc định Lantern Line) |
 | `/lantern-line` | **Lantern Line** (Tic‑Tac‑Toe 3×3) biến thể **vanishing**: mỗi bên chỉ giữ tối đa **3 quân**, đặt quân thứ 4 thì quân đặt sớm nhất của mình biến mất; máy chơi bằng **minimax + alpha‑beta pruning** |
 | `/ember-and-tide` | **Ember & Tide** (5×5×5, Fire vs Water): quân rơi vào 25 cột, cao tối đa 5; **4 quân liền nhau theo bất kỳ hướng 3D nào** là thắng |
+| `/tidepool` | **Tidepool** (bàn lục giác 61 lỗ, Pearl vs Coral): đẩy hàng bi, **đẩy 6 bi của đối thủ xuống biển** là thắng |
 
 ![Sảnh game](e2e/screenshots/7-lobby.png)
 
@@ -51,6 +52,24 @@ Máy có 3 mức (`src/lib/fire-water/ai.ts`, spec: [`docs/specs/game-lobby/`](d
 | Trung bình | luôn thắng ngay và chặn, tránh làm lộ ô phía trên cho đối thủ |
 | Khó | negamax + alpha‑beta đào sâu dần (`search.ts`), giới hạn 30 000 nút, đọc được khoảng 4–5 nước |
 
+## Luật Tidepool
+
+1. Bàn lục giác 61 lỗ, mỗi bên 14 viên bi. Pearl đi trước ở ván đầu, sau đó người đi trước đổi luân phiên.
+2. Mỗi lượt chọn 1–3 viên bi của mình nằm liền nhau trên một đường thẳng và đi 1 ô (các điểm vàng chỉ chỗ đi được).
+3. Đi **dọc theo đường**: hàng nhiều bi hơn được đẩy hàng ít hơn của đối thủ (3 đẩy 2, 3 đẩy 1, 2 đẩy 1); bằng nhau hoặc có bi mình chắn phía sau thì không đẩy được.
+4. Đi **ngang** (2–3 viên cùng bước sang bên): mọi ô đích phải trống, không bao giờ đẩy.
+5. Bi bị đẩy ra khỏi mép lăn theo rãnh xuống khay; ai đẩy được **6 viên** trước là thắng.
+
+Máy (Coral) có 3 mức (`src/lib/tidepool/ai.ts`, chạy trong Web Worker):
+
+| Mức | Cách chơi |
+|---|---|
+| Dễ | nhìn 1 nước, 35% đi ngẫu nhiên |
+| Trung bình | AI 2 ply của design: với mỗi nước, giả sử đối thủ đáp trả tệ nhất cho mình |
+| Khó | negamax + alpha‑beta đào sâu dần, bảng chuyển vị, quiescence cho các nước đẩy rơi (`search.ts`), giới hạn 400 000 nút (~0,7 s/nước trên laptop, tối đa ~1,6 s, đọc 4–6 ply). Khi đang dẫn thì ép vào giữa; tránh lặp lại thế cờ đã gặp để không đi vòng vòng |
+
+Đo bằng `bun scripts/bench-tidepool.ts` (đấu cả ván, hai bên đổi lượt đi trước).
+
 ## Luật Tic‑Tac‑Toe 3×3
 
 1. Bàn 3×3, X và O luân phiên; 3 quân thẳng hàng (ngang, dọc, chéo) là thắng.
@@ -86,12 +105,14 @@ cưỡng bức dài nhất là 17 ply — nên mức Khó dùng độ sâu 18.
 
 ```
 src/app/                 layout (font Be Vietnam Pro), các route, globals.css (token màu của design)
-src/components/          Lobby, Hud (HUD dùng chung), Game + BoardScene, FireWaterGame + FireWaterScene
+src/components/          Lobby, Hud (HUD dùng chung), Game + BoardScene, FireWaterGame + FireWaterScene, TidepoolGame + TidepoolScene
 src/lib/game/            Tic‑Tac‑Toe: types, rules (engine thuần), match (reducer trận), ai
 src/lib/fire-water/      Ember & Tide: rules, match, ai
-src/lib/scene/           SceneController, FireWaterController (three.js), geometry, terrain, shaders
+src/lib/tidepool/        Tidepool: rules, match, ai
+src/lib/scene/           SceneController, FireWaterController, TidepoolController (three.js), geometry, terrain, shaders
 tests/                   bun test + bộ giải chính xác
 scripts/verify-ai.ts     kiểm tra AI toàn bộ thế cờ
+scripts/bench-tidepool.ts  đấu thử các mức AI của Tidepool
 e2e/smoke.ts             kiểm thử trình duyệt
 docs/specs/…             spec SDD: requirements → design → tasks
 ```

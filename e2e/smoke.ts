@@ -80,7 +80,8 @@ try {
   page.on('pageerror', (e) => errors.push(e.message));
   const warnings: string[] = [];
   page.on('console', (m) => {
-    if (m.type() === 'error') errors.push(m.text());
+    // Vercel Analytics / Speed Insights scripts are only served on Vercel; locally they 404 by design.
+    if (m.type() === 'error' && !m.location().url.includes('/_vercel/')) errors.push(m.text());
     if (/too many active webgl contexts/i.test(m.text())) warnings.push(m.text());
   });
 
@@ -204,7 +205,7 @@ try {
   await page.goto(URL, { waitUntil: 'networkidle' });
   await page.screenshot({ path: `${SHOTS}/7-lobby.png`, fullPage: true });
   check('lobby title', (await page.title()) === 'Verdant');
-  check('lobby lists both games', (await page.locator('.game-card').count()) === 2);
+  check('lobby lists all three games', (await page.locator('.game-card').count()) === 3);
   check('lobby: call to action with the mascot', await page.getByRole('heading', { name: 'Interested in working with me?' }).isVisible() && (await page.locator('.lobby-cta-art img').evaluate((i: HTMLImageElement) => i.complete && i.naturalWidth > 0)));
   await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'About' }).click();
   // Anchor links scroll smoothly; wait for the glide to bring the About section to the top.
@@ -224,7 +225,7 @@ try {
   await firstVisit.close();
   check('footer: 3 social links and 2 legal links', (await page.getByRole('navigation', { name: 'Social media' }).getByRole('link').count()) === 3 && (await page.locator('.footer-social a[href="#"]').count()) === 0 && (await page.getByRole('navigation', { name: 'Legal and site links' }).getByRole('link').count()) === 2);
   const sitemapXml = await (await page.request.get(`${URL}/sitemap.xml`)).text();
-  check('sitemap.xml lists every public page', ['/lantern-line', '/ember-and-tide', '/privacy', '/terms', '/sitemap'].every((p) => sitemapXml.includes(`${p}</loc>`)));
+  check('sitemap.xml lists every public page', ['/lantern-line', '/ember-and-tide', '/tidepool', '/privacy', '/terms', '/sitemap'].every((p) => sitemapXml.includes(`${p}</loc>`)));
   const robots = await (await page.request.get(`${URL}/robots.txt`)).text();
   check('robots.txt allows crawling and points to the sitemap', robots.includes('Allow: /') && /Sitemap: https?:\/\/\S+\/sitemap\.xml/.test(robots), robots.replace(/\n/g, ' | '));
   await page.getByRole('navigation', { name: 'Legal and site links' }).getByRole('link', { name: 'Privacy Policy' }).click();

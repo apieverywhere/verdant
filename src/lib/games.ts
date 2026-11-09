@@ -2,6 +2,7 @@
 export const GAMES = [
   { id: 'lantern-line', name: 'Lantern Line', href: '/lantern-line' },
   { id: 'ember-and-tide', name: 'Ember & Tide', href: '/ember-and-tide' },
+  { id: 'tidepool', name: 'Tidepool', href: '/tidepool' },
 ] as const;
 
 export type Game = (typeof GAMES)[number];

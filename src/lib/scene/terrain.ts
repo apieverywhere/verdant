@@ -79,3 +79,25 @@ export function terrainH(x: number, z: number) {
   h += sstep(40, 105, r) * (18 + 75 * Math.pow(m, 1.7) + 12 * ridge) * low;
   return h;
 }
+
+/** Direction towards the dusk sun over the Tidepool lagoon. */
+export const LAGOON_SUN: [number, number, number] = (() => {
+  const v = [-0.3, 0.08, -0.95], l = Math.hypot(v[0], v[1], v[2]);
+  return [v[0] / l, v[1] / l, v[2] / l];
+})();
+const LAGOON_XZ = (() => {
+  const l = Math.hypot(LAGOON_SUN[0], LAGOON_SUN[2]);
+  return [LAGOON_SUN[0] / l, LAGOON_SUN[2] / l];
+})();
+
+/** Lagoon: a wide sandy ring of low islands, with green hills that open towards the sun. */
+export function lagoonTerrainH(x: number, z: number) {
+  const r = Math.hypot(x, z);
+  let h = -4 + sstep(22, 36, r) * (5 + 4 * fbm(x * 0.07 + 7, z * 0.07 + 3));
+  const toward = r > 0.001 ? (x * LAGOON_XZ[0] + z * LAGOON_XZ[1]) / r : 0;
+  const low = 1 - 0.7 * sstep(0.2, 0.9, toward);
+  const m = fbm(x * 0.026 + 5, z * 0.026 + 9);
+  const ridge = 1 - Math.abs(2 * vnoise(x * 0.05 + 2, z * 0.05) - 1);
+  h += sstep(44, 105, r) * (10 + 44 * Math.pow(m, 1.6) + 8 * ridge) * low;
+  return h;
+}

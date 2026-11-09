@@ -20,8 +20,8 @@
   color-scheme: dark;
 }
 
-/* Moonlit ice lake palette for Ember & Tide. */
-.moon {
+/* Moonlit ice lake palette for Ember & Tide; the Tidepool lagoon uses the same HUD glass. */
+.moon, .lagoon {
   --bg: #0e2333;
   --ink: #f0f6fa;
   --ink-strong: #ffffff;
@@ -61,7 +61,7 @@ html, body {
   overflow: hidden;
   background: var(--bg);
 }
-.stage.moon { min-height: 600px; }
+.stage.moon, .stage.lagoon { min-height: 600px; }
 
 .scene {
   position: absolute;
@@ -124,6 +124,8 @@ html, body {
 .score.narrow { min-width: 48px; }
 .score-value { font-size: 28px; font-weight: 800; line-height: 1.1; color: var(--ink-strong); font-variant-numeric: tabular-nums; }
 .score-label { font-size: 12px; font-weight: 500; color: var(--ink-soft); }
+.score-value small { font-size: 15px; font-weight: 700; color: var(--ink-soft); }
+.score-sub { font-size: 11px; color: #9fb3c4; }
 .divider { width: 1px; align-self: stretch; background: rgba(255, 255, 255, 0.14); }
 
 .nogl {
@@ -328,6 +330,11 @@ html, body {
 }
 .a11y-board button:disabled { cursor: default; opacity: 0.7; }
 .a11y-board button:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+/* Tidepool's keyboard controls are lists of labelled buttons rather than a grid. */
+.a11y-list { max-height: 80%; overflow-y: auto; }
+.a11y-list > [role='group'] { display: flex; flex-direction: column; gap: 4px; }
+.a11y-list button { width: auto; min-width: 220px; height: auto; min-height: 44px; padding: 0 12px; text-align: left; font-weight: 600; }
+.a11y-list button[aria-pressed='true'] { border-color: var(--gold); background: rgba(255, 210, 122, 0.18); }
 
 /* Lobby */
 .lobby {

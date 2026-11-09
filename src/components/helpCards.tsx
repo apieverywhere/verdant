@@ -1,4 +1,4 @@
-/** Illustrated "How to play" cards, converted from the design artboards (Main, Caro5). */
+/** Illustrated "How to play" cards, converted from the design artboards (Main, Caro5, Tidepool). */
 import type { HelpCard } from './HowToPlay';
 
 export const TIC_TAC_TOE_HELP: HelpCard[] = [
@@ -85,6 +85,51 @@ export const FIRE_WATER_HELP: HelpCard[] = [
   {
     title: 'Move the camera',
     text: 'Drag to look around the board from any side, scroll to zoom. A quick click without dragging drops a piece.',
+    art: (
+      <svg viewBox="0 0 200 120" role="img" aria-label="Drag to rotate the view, scroll the mouse wheel to zoom" className="help-art"><path d="M38 60a26 26 0 1 1 9 19.7" fill="none" stroke="#ffd27a" strokeWidth="4" strokeLinecap="round" /><path d="M38 87l9-7.3-1.5 10.5" fill="none" stroke="#ffd27a" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" /><text x="64" y="110" textAnchor="middle" fontSize="11" fontWeight="600" fill="#c3d6e3" fontFamily="sans-serif">Drag = rotate</text><path d="M134 21l6-6 6 6M134 87l6 6 6-6" fill="none" stroke="#ffd27a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /><rect x="124" y="28" width="32" height="50" rx="16" fill="none" stroke="#c3d6e3" strokeWidth="3" /><path d="M140 28v12" stroke="#c3d6e3" strokeWidth="2" /><rect x="137" y="36" width="6" height="11" rx="3" fill="#ffd27a" /><text x="140" y="110" textAnchor="middle" fontSize="11" fontWeight="600" fill="#c3d6e3" fontFamily="sans-serif">Scroll = zoom</text></svg>
+    ),
+  },
+];
+
+export const TIDEPOOL_HELP: HelpCard[] = [
+  {
+    title: 'The goal',
+    text: "Each side starts with 14 marbles. Push 6 of your opponent's marbles off the edge of the board to win. Pearl moves first in round one, then the starter alternates. Against the computer, you are Pearl.",
+    art: (
+      <svg viewBox="0 0 200 120" role="img" aria-label="A Coral marble falls off the board into a tray holding six Coral marbles" className="help-art"><path d="M20 40 H180" stroke="#d6ad6c" strokeWidth="3" strokeLinecap="round" /><circle cx="100" cy="24" r="11" fill="#ff6f5e" stroke="#ffb3a8" strokeWidth="1.5" /><path d="M100 40v18M95 53l5 6 5-6" fill="none" stroke="#ffd27a" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="3 3" /><rect x="25" y="70" width="150" height="34" rx="17" fill="#12304a" stroke="#d6ad6c" strokeWidth="2" /><circle cx="45" cy="87" r="9" fill="#ff6f5e" /><circle cx="67" cy="87" r="9" fill="#ff6f5e" /><circle cx="89" cy="87" r="9" fill="#ff6f5e" /><circle cx="111" cy="87" r="9" fill="#ff6f5e" /><circle cx="133" cy="87" r="9" fill="#ff6f5e" /><circle cx="155" cy="87" r="9" fill="#ff6f5e" opacity="0.45" /></svg>
+    ),
+  },
+  {
+    title: 'Move 1, 2 or 3 in a line',
+    text: 'On your turn, click 1, 2 or 3 of your marbles that sit next to each other in a straight line. Gold markers show where they can go; click one to move them one space.',
+    art: (
+      <svg viewBox="0 0 200 120" role="img" aria-label="Three Pearl marbles in a row slide one space forward along their line into an empty hole" className="help-art"><circle cx="44" cy="70" r="11" fill="#1f3346" /><circle cx="72" cy="70" r="11" fill="#1f3346" /><circle cx="100" cy="70" r="11" fill="#1f3346" /><circle cx="128" cy="70" r="11" fill="#1f3346" /><circle cx="156" cy="70" r="11" fill="#1f3346" /><circle cx="44" cy="70" r="11" fill="#f1ece2" stroke="#c9bfae" strokeWidth="1.5" /><circle cx="72" cy="70" r="11" fill="#f1ece2" stroke="#c9bfae" strokeWidth="1.5" /><circle cx="100" cy="70" r="11" fill="#f1ece2" stroke="#c9bfae" strokeWidth="1.5" /><circle cx="128" cy="70" r="12" fill="none" stroke="#ffd27a" strokeWidth="2.4" strokeDasharray="4 3" /><path d="M44 44 H134 M128 38l7 6-7 6" fill="none" stroke="#ffd27a" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+    ),
+  },
+  {
+    title: 'Step sideways',
+    text: 'A line of 2 or 3 can also step sideways together, as long as every space it moves into is empty. Sideways moves can never push.',
+    art: (
+      <svg viewBox="0 0 200 120" role="img" aria-label="Three Pearl marbles step sideways together into the row of empty holes below" className="help-art"><circle cx="44" cy="44" r="11" fill="#1f3346" /><circle cx="72" cy="44" r="11" fill="#1f3346" /><circle cx="100" cy="44" r="11" fill="#1f3346" /><circle cx="128" cy="44" r="11" fill="#1f3346" /><circle cx="156" cy="44" r="11" fill="#1f3346" /><circle cx="58" cy="84" r="11" fill="#1f3346" /><circle cx="86" cy="84" r="11" fill="#1f3346" /><circle cx="114" cy="84" r="11" fill="#1f3346" /><circle cx="142" cy="84" r="11" fill="#1f3346" /><circle cx="72" cy="44" r="11" fill="#f1ece2" stroke="#c9bfae" strokeWidth="1.5" /><circle cx="100" cy="44" r="11" fill="#f1ece2" stroke="#c9bfae" strokeWidth="1.5" /><circle cx="128" cy="44" r="11" fill="#f1ece2" stroke="#c9bfae" strokeWidth="1.5" /><circle cx="86" cy="84" r="12" fill="none" stroke="#ffd27a" strokeWidth="2.4" strokeDasharray="4 3" /><circle cx="114" cy="84" r="12" fill="none" stroke="#ffd27a" strokeWidth="2.4" strokeDasharray="4 3" /><circle cx="142" cy="84" r="12" fill="none" stroke="#ffd27a" strokeWidth="2.4" strokeDasharray="4 3" /><path d="M76 56l6 14M104 56l6 14M132 56l6 14" fill="none" stroke="#ffd27a" strokeWidth="2.4" strokeLinecap="round" /></svg>
+    ),
+  },
+  {
+    title: 'Push with more',
+    text: "Moving along its line, a bigger group can push a smaller one: 3 push 2, 3 push 1, 2 push 1. Equal numbers can't push, and you can't push if one of your own marbles is in the way.",
+    art: (
+      <svg viewBox="0 0 200 120" role="img" aria-label="Three Pearl marbles push two Coral marbles one space along the line" className="help-art"><circle cx="16" cy="70" r="11" fill="#1f3346" /><circle cx="44" cy="70" r="11" fill="#1f3346" /><circle cx="72" cy="70" r="11" fill="#1f3346" /><circle cx="100" cy="70" r="11" fill="#1f3346" /><circle cx="128" cy="70" r="11" fill="#1f3346" /><circle cx="156" cy="70" r="11" fill="#1f3346" /><circle cx="184" cy="70" r="11" fill="#1f3346" /><circle cx="16" cy="70" r="11" fill="#f1ece2" stroke="#c9bfae" strokeWidth="1.5" /><circle cx="44" cy="70" r="11" fill="#f1ece2" stroke="#c9bfae" strokeWidth="1.5" /><circle cx="72" cy="70" r="11" fill="#f1ece2" stroke="#c9bfae" strokeWidth="1.5" /><circle cx="100" cy="70" r="11" fill="#ff6f5e" stroke="#ffb3a8" strokeWidth="1.5" /><circle cx="128" cy="70" r="11" fill="#ff6f5e" stroke="#ffb3a8" strokeWidth="1.5" /><path d="M20 42 H166 M160 36l7 6-7 6" fill="none" stroke="#ffd27a" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" /><text x="44" y="102" textAnchor="middle" fontSize="12" fontWeight="800" fill="#f1ece2" fontFamily="sans-serif">3</text><text x="114" y="102" textAnchor="middle" fontSize="12" fontWeight="800" fill="#ffb3a8" fontFamily="sans-serif">2</text></svg>
+    ),
+  },
+  {
+    title: 'Push them into the sea',
+    text: "When the space behind your opponent's marbles is the edge of the board, your push sends the last one off. It drops into the gutter, rolls down the ramp and lands in the tray. Keep your own marbles away from the edge!",
+    art: (
+      <svg viewBox="0 0 200 120" role="img" aria-label="Two Pearl marbles push a Coral marble over the edge of the board into the sea" className="help-art"><rect x="148" y="0" width="52" height="120" fill="#2f8f9a" opacity="0.35" /><path d="M148 18 V102" stroke="#d6ad6c" strokeWidth="3" strokeLinecap="round" /><circle cx="66" cy="60" r="11" fill="#1f3346" /><circle cx="94" cy="60" r="11" fill="#1f3346" /><circle cx="122" cy="60" r="11" fill="#1f3346" /><circle cx="66" cy="60" r="11" fill="#f1ece2" stroke="#c9bfae" strokeWidth="1.5" /><circle cx="94" cy="60" r="11" fill="#f1ece2" stroke="#c9bfae" strokeWidth="1.5" /><circle cx="122" cy="60" r="11" fill="#ff6f5e" stroke="#ffb3a8" strokeWidth="1.5" opacity="0.5" /><circle cx="174" cy="92" r="11" fill="#ff6f5e" stroke="#ffb3a8" strokeWidth="1.5" /><path d="M134 54 Q160 52 170 76" fill="none" stroke="#ffd27a" strokeWidth="2.4" strokeLinecap="round" strokeDasharray="4 3" /><path d="M164 72l6 6 3-8" fill="none" stroke="#ffd27a" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+    ),
+  },
+  {
+    title: 'Move the camera',
+    text: 'Drag to look around the board, scroll to zoom. Click an empty spot to clear your selection.',
     art: (
       <svg viewBox="0 0 200 120" role="img" aria-label="Drag to rotate the view, scroll the mouse wheel to zoom" className="help-art"><path d="M38 60a26 26 0 1 1 9 19.7" fill="none" stroke="#ffd27a" strokeWidth="4" strokeLinecap="round" /><path d="M38 87l9-7.3-1.5 10.5" fill="none" stroke="#ffd27a" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" /><text x="64" y="110" textAnchor="middle" fontSize="11" fontWeight="600" fill="#c3d6e3" fontFamily="sans-serif">Drag = rotate</text><path d="M134 21l6-6 6 6M134 87l6 6 6-6" fill="none" stroke="#ffd27a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /><rect x="124" y="28" width="32" height="50" rx="16" fill="none" stroke="#c3d6e3" strokeWidth="3" /><path d="M140 28v12" stroke="#c3d6e3" strokeWidth="2" /><rect x="137" y="36" width="6" height="11" rx="3" fill="#ffd27a" /><text x="140" y="110" textAnchor="middle" fontSize="11" fontWeight="600" fill="#c3d6e3" fontFamily="sans-serif">Scroll = zoom</text></svg>
     ),

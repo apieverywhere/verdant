@@ -48,11 +48,13 @@ export class Geo {
     this.tri(p, s, t, c, inside);
   }
 
-  box(cx: number, cy: number, cz: number, sx: number, sy: number, sz: number, c: RGB, ry = 0) {
-    const cs = Math.cos(ry), sn = Math.sin(ry), hx = sx / 2, hy = sy / 2, hz = sz / 2;
+  /** Box centred on (cx, cy, cz), tilted by `rz` around z first, then turned by `ry` around y. */
+  box(cx: number, cy: number, cz: number, sx: number, sy: number, sz: number, c: RGB, ry = 0, rz = 0) {
+    const cs = Math.cos(ry), sn = Math.sin(ry), c2 = Math.cos(rz), s2 = Math.sin(rz), hx = sx / 2, hy = sy / 2, hz = sz / 2;
     const P: Vec3[] = [];
     for (let i = 0; i < 8; i++) {
-      const x = i & 1 ? hx : -hx, y = i & 2 ? hy : -hy, z = i & 4 ? hz : -hz;
+      const x0 = i & 1 ? hx : -hx, y0 = i & 2 ? hy : -hy, z = i & 4 ? hz : -hz;
+      const x = x0 * c2 - y0 * s2, y = x0 * s2 + y0 * c2;
       P.push([cx + x * cs + z * sn, cy + y, cz - x * sn + z * cs]);
     }
     const center: Vec3 = [cx, cy, cz];
@@ -76,6 +78,25 @@ export class Geo {
         this.tri(p00, p01, [cx, y1, cz], c, inside);
       }
       this.tri([cx, y0, cz], p00, p01, c, inside);
+    }
+  }
+
+  /** UV sphere of radius R centred on the origin, with smooth (per-vertex) normals. */
+  sphere(R: number, nu: number, nv: number, c: RGB) {
+    const P = (i: number, j: number): Vec3 => {
+      const u = (i / nu) * Math.PI * 2, v = -Math.PI / 2 + (j / nv) * Math.PI;
+      return [Math.cos(v) * Math.cos(u), Math.sin(v), Math.cos(v) * Math.sin(u)];
+    };
+    for (let j = 0; j < nv; j++) {
+      for (let i = 0; i < nu; i++) {
+        const a = P(i, j), b = P(i + 1, j), d = P(i + 1, j + 1), e = P(i, j + 1);
+        // Wound counter-clockwise seen from outside, so front faces point outwards.
+        for (const n of [a, d, b, a, e, d]) {
+          this.pos.push(n[0] * R, n[1] * R, n[2] * R);
+          this.nor.push(n[0], n[1], n[2]);
+          this.col.push(c[0], c[1], c[2]);
+        }
+      }
     }
   }
 
