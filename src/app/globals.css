@@ -624,10 +624,6 @@ html, body {
   .game-card:hover { transform: none; }
 }
 
-/* Ads: a labelled box with reserved height so the page does not jump when the ad loads. */
-.ad-slot { margin: 8px 24px 0; padding: 10px; border: 1px solid var(--lobby-line); border-radius: 16px; min-height: 120px; }
-.ad-label { display: block; margin-bottom: 6px; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); }
-
 /* Legal pages (privacy policy) */
 .legal { min-height: 100vh; background: #0e2333; color: var(--ink); padding: 48px 16px 64px; }
 .legal-inner { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; line-height: 1.6; font-size: 15px; }

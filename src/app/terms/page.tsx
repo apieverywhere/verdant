@@ -1,7 +1,6 @@
 /** `/terms`: the terms of service for playing on Verdant. */
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { adsEnabled } from '@/lib/ads';
 import { CONTACT_EMAIL } from '@/lib/site';
 
 export const metadata: Metadata = {
@@ -50,16 +49,6 @@ export default function TermsPage() {
           Verdant. You may play the games and share links to them; any other use needs my written permission.
         </p>
 
-        {adsEnabled && (
-          <>
-            <h2>Advertising</h2>
-            <p>
-              Verdant is free because it shows ads served by third parties such as Google. I do not control what those
-              ads offer, and a purchase you make through an ad is between you and the advertiser. How ads use cookies is
-              explained in my <Link href="/privacy">Privacy Policy</Link>.
-            </p>
-          </>
-        )}
 
         <h2>No warranty</h2>
         <p>

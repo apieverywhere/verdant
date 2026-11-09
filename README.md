@@ -36,16 +36,6 @@ biến mất, xếp chồng, thắng, khóa bàn, đấu máy, bàn phím, bố 
 khi chuyển trang và không có lỗi console; ảnh chụp lưu ở `e2e/screenshots/`. Mặc định dùng Google
 Chrome cài sẵn trên macOS, đổi bằng biến `CHROME_PATH`.
 
-## Quảng cáo (Google AdSense)
-
-Mặc định không có quảng cáo và không tải mã quảng cáo nào. Để bật, đặt các biến trong `.env.example` (bản sao `.env.local`, hoặc trong trang quản lý của nơi host) rồi **build lại**, vì các biến `NEXT_PUBLIC_` được đóng gói lúc build:
-
-1. `NEXT_PUBLIC_ADSENSE_CLIENT`: mã nhà xuất bản `ca-pub-…`. Có mã này là site tự có `/ads.txt`, link “Cookie settings” ở chân trang và mục quảng cáo trong `/privacy`.
-2. `NEXT_PUBLIC_ADSENSE_LOBBY_SLOT`: mã ad unit cho banner ở trang chủ, dưới danh sách game.
-3. `NEXT_PUBLIC_ADSENSE_GAME_BREAKS=on`: khi AdSense đã duyệt H5 Games Ads, xin một lượt quảng cáo khi người chơi bấm “New game” sau một ván đã xong. Game không bao giờ phải chờ quảng cáo.
-4. Trong AdSense, vào **Privacy & messaging** và bật thông báo đồng ý cho châu Âu / Anh (bảng hỏi đã được Google chứng nhận). Link “Cookie settings” sẽ mở lại bảng hỏi này.
-5. Trước khi chạy thật: sửa `CONTACT_EMAIL` trong `src/app/privacy/page.tsx` và viết trang Terms of Service.
-
 ## Luật Ember & Tide
 
 1. Bàn 5×5, Fire và Water luân phiên chọn một ô; quân rơi xuống vị trí thấp nhất còn trống của cột đó.

@@ -4,8 +4,6 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import tano from '@/assets/tano.png';
 import { GAMES, type GameId } from '@/lib/games';
-import { LOBBY_SLOT } from '@/lib/ads';
-import { AdSlot } from './Ads';
 import PlayRecentLink from './PlayRecentLink';
 import { SiteFooter, SiteHeader } from './SiteChrome';
 
@@ -159,9 +157,6 @@ export default function Lobby() {
           </div>
         </section>
 
-        <div className="lobby-section">
-          <AdSlot slot={LOBBY_SLOT} />
-        </div>
       </main>
 
       <section className="lobby-cta" aria-labelledby="cta-title">

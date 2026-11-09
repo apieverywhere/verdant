@@ -223,9 +223,6 @@ try {
   }
   await firstVisit.close();
   check('footer: 3 social links and 2 legal links', (await page.getByRole('navigation', { name: 'Social media' }).getByRole('link').count()) === 3 && (await page.locator('.footer-social a[href="#"]').count()) === 0 && (await page.getByRole('navigation', { name: 'Legal and site links' }).getByRole('link').count()) === 2);
-  // Ads are off unless NEXT_PUBLIC_ADSENSE_CLIENT is set at build time: no slot, no script, no ads.txt.
-  check('ads off by default: no ad slot or ad script', (await page.locator('.ad-slot').count()) === 0 && (await page.locator('script[src*="googlesyndication"]').count()) === 0);
-  check('ads off by default: /ads.txt is 404', (await page.request.get(`${URL}/ads.txt`)).status() === 404);
   const sitemapXml = await (await page.request.get(`${URL}/sitemap.xml`)).text();
   check('sitemap.xml lists every public page', ['/lantern-line', '/ember-and-tide', '/privacy', '/terms', '/sitemap'].every((p) => sitemapXml.includes(`${p}</loc>`)));
   const robots = await (await page.request.get(`${URL}/robots.txt`)).text();

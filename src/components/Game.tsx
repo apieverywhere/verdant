@@ -5,7 +5,6 @@ import { chooseMove } from '@/lib/game/ai';
 import { initialMatch, isAiTurn, matchReducer } from '@/lib/game/match';
 import { vanishingCell } from '@/lib/game/rules';
 import type { Mode } from '@/lib/game/types';
-import { requestAdBreak } from '@/lib/ads';
 import { rememberGame } from '@/lib/recentGame';
 import type { SceneView } from '@/lib/scene/SceneController';
 import BoardScene from './BoardScene';
@@ -100,10 +99,7 @@ export default function Game() {
           <Toolbar
             mode={mode}
             onMode={setMode}
-            onNewGame={() => {
-              if (game.winner) requestAdBreak('new-game');
-              dispatch({ type: 'newGame' });
-            }}
+            onNewGame={() => dispatch({ type: 'newGame' })}
             onResetScores={() => dispatch({ type: 'resetScores' })}
           >
             {ai && <DifficultyPicker value={difficulty} onChange={(d) => dispatch({ type: 'setDifficulty', difficulty: d })} />}

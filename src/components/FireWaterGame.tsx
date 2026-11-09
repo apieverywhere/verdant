@@ -6,7 +6,6 @@ import type { AiReply } from '@/lib/fire-water/ai.worker';
 import { initialMatch, isAiTurn, matchReducer } from '@/lib/fire-water/match';
 import { COLUMNS, SIZE, dropCell, stackHeight } from '@/lib/fire-water/rules';
 import type { Mode, Player } from '@/lib/game/types';
-import { requestAdBreak } from '@/lib/ads';
 import { rememberGame } from '@/lib/recentGame';
 import type { FireWaterView } from '@/lib/scene/FireWaterController';
 import FireWaterScene from './FireWaterScene';
@@ -138,10 +137,7 @@ export default function FireWaterGame() {
           <Toolbar
             mode={mode}
             onMode={setMode}
-            onNewGame={() => {
-              if (game.winner) requestAdBreak('new-game');
-              dispatch({ type: 'newGame' });
-            }}
+            onNewGame={() => dispatch({ type: 'newGame' })}
             onResetScores={() => dispatch({ type: 'resetScores' })}
           >
             {ai && <DifficultyPicker value={difficulty} onChange={(d) => dispatch({ type: 'setDifficulty', difficulty: d })} />}

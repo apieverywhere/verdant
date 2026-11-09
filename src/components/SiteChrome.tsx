@@ -1,7 +1,6 @@
 /** Header and footer shared by the lobby and the other site pages (sitemap, privacy). Server Components. */
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import { CookieSettingsLink } from './Ads';
 import PlayRecentLink from './PlayRecentLink';
 
 /** The author's social profiles, shown in the footer. */
@@ -37,7 +36,7 @@ export const SOCIAL: { label: string; href: string; icon: ReactNode }[] = [
   },
 ];
 
-/** A free browser game with no accounts only needs its terms and privacy policy (plus cookie settings once ads run). */
+/** A free browser game with no accounts only needs its terms and privacy policy. */
 const LEGAL_LINKS = [
   { label: 'Terms of Service', href: '/terms' },
   { label: 'Privacy Policy', href: '/privacy' },
@@ -88,7 +87,6 @@ export function SiteFooter() {
 
         <nav aria-label="Legal and site links" className="footer-links">
           {LEGAL_LINKS.map((l) => <Link key={l.label} href={l.href}>{l.label}</Link>)}
-          <CookieSettingsLink />
         </nav>
 
         <div className="footer-bottom">
