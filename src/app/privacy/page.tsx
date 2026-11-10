@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { CONTACT_EMAIL } from '@/lib/site';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy · Verdant',
+  title: 'Privacy Policy',
+  alternates: { canonical: '/privacy' },
   description: 'What Verdant stores and which statistics it collects.',
 };
 

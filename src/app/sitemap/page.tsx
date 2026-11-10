@@ -5,7 +5,8 @@ import { SiteFooter, SiteHeader } from '@/components/SiteChrome';
 import { GAMES } from '@/lib/games';
 
 export const metadata: Metadata = {
-  title: 'Sitemap · Verdant',
+  title: 'Sitemap',
+  alternates: { canonical: '/sitemap' },
   description: 'Every section of Verdant in one place.',
 };
 

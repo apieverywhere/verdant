@@ -1,13 +1,20 @@
 import type { Metadata, Viewport } from 'next';
 import FireWaterGame from '@/components/FireWaterGame';
+import JsonLd from '@/components/JsonLd';
+import { gameById } from '@/lib/games';
+import { gameJsonLd, gameMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = {
-  title: 'Ember & Tide – Moonlit Ice Lake',
-  description: 'Fire vs Water on a 5×5 board: pieces drop in and stack up to 5 high. Connect 4 in any direction to win.',
-};
+const game = gameById('ember-and-tide')!;
+
+export const metadata: Metadata = gameMetadata(game);
 
 export const viewport: Viewport = { themeColor: '#0e2333' };
 
 export default function Page() {
-  return <FireWaterGame />;
+  return (
+    <>
+      <JsonLd data={gameJsonLd(game)} />
+      <FireWaterGame />
+    </>
+  );
 }

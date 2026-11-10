@@ -1,10 +1,10 @@
 /** `/sitemap.xml` for search engines: every public page. Keep in step with the human sitemap at `/sitemap`. */
 import type { MetadataRoute } from 'next';
 import { GAMES } from '@/lib/games';
-import { siteUrl } from '@/lib/siteUrl';
+import { SITE_URL } from '@/lib/site';
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const base = await siteUrl();
+export default function sitemap(): MetadataRoute.Sitemap {
+  const base = SITE_URL;
   const page = (path: string, priority: number, changeFrequency: 'weekly' | 'monthly' | 'yearly') => ({
     url: `${base}${path}`,
     changeFrequency,

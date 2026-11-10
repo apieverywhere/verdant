@@ -1,13 +1,20 @@
 import type { Metadata, Viewport } from 'next';
 import TidepoolGame from '@/components/TidepoolGame';
+import JsonLd from '@/components/JsonLd';
+import { gameById } from '@/lib/games';
+import { gameJsonLd, gameMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = {
-  title: 'Tidepool – Lagoon at Dusk',
-  description: "Pearl vs Coral on a hexagonal board in a lagoon. Push lines of marbles and knock 6 of your opponent's into the sea.",
-};
+const game = gameById('tidepool')!;
+
+export const metadata: Metadata = gameMetadata(game);
 
 export const viewport: Viewport = { themeColor: '#0e2333' };
 
 export default function Page() {
-  return <TidepoolGame />;
+  return (
+    <>
+      <JsonLd data={gameJsonLd(game)} />
+      <TidepoolGame />
+    </>
+  );
 }

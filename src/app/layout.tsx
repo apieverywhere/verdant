@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Be_Vietnam_Pro } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, SITE_URL } from '@/lib/site';
 import './globals.css';
 
 const GOOGLE_VERIFICATION = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION?.trim();
@@ -14,8 +15,20 @@ const font = Be_Vietnam_Pro({
 });
 
 export const metadata: Metadata = {
-  title: 'Verdant',
-  description: 'Classic games in breathtaking 3D worlds. No install, no account: open it and play, with a friend or against the computer.',
+  metadataBase: new URL(SITE_URL),
+  // Pages set a bare title ("Tidepool – …"); the template adds the site name.
+  title: { default: `${SITE_NAME} – ${SITE_TAGLINE}`, template: `%s · ${SITE_NAME}` },
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  keywords: ['free online board games', '3D board games', 'browser games', 'no download', 'play vs computer', '2 player games'],
+  openGraph: {
+    type: 'website',
+    siteName: SITE_NAME,
+    title: `${SITE_NAME} – ${SITE_TAGLINE}`,
+    description: SITE_DESCRIPTION,
+    locale: 'en_US',
+  },
+  twitter: { card: 'summary_large_image', title: `${SITE_NAME} – ${SITE_TAGLINE}`, description: SITE_DESCRIPTION },
   // Google Search Console "HTML tag" verification; the tag is only rendered when the code is set.
   ...(GOOGLE_VERIFICATION ? { verification: { google: GOOGLE_VERIFICATION } } : {}),
 };

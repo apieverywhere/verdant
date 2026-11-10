@@ -204,7 +204,7 @@ try {
   // --- Lobby
   await page.goto(URL, { waitUntil: 'networkidle' });
   await page.screenshot({ path: `${SHOTS}/7-lobby.png`, fullPage: true });
-  check('lobby title', (await page.title()) === 'Verdant');
+  check('lobby title', (await page.title()) === 'Verdant – Free 3D Board Games in Your Browser');
   check('lobby lists all three games', (await page.locator('.game-card').count()) === 3);
   check('lobby: call to action with the mascot', await page.getByRole('heading', { name: 'Interested in working with me?' }).isVisible() && (await page.locator('.lobby-cta-art img').evaluate((i: HTMLImageElement) => i.complete && i.naturalWidth > 0)));
   await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'About' }).click();

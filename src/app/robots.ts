@@ -1,9 +1,9 @@
 /** `/robots.txt`: everything may be crawled; points crawlers at the sitemap. */
 import type { MetadataRoute } from 'next';
-import { siteUrl } from '@/lib/siteUrl';
+import { SITE_URL } from '@/lib/site';
 
-export default async function robots(): Promise<MetadataRoute.Robots> {
-  const base = await siteUrl();
+export default function robots(): MetadataRoute.Robots {
+  const base = SITE_URL;
   return {
     rules: { userAgent: '*', allow: '/' },
     sitemap: `${base}/sitemap.xml`,

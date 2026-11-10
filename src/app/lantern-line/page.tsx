@@ -1,13 +1,20 @@
 import type { Metadata, Viewport } from 'next';
 import Game from '@/components/Game';
+import JsonLd from '@/components/JsonLd';
+import { gameById } from '@/lib/games';
+import { gameJsonLd, gameMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = {
-  title: 'Lantern Line – Sunset Valley',
-  description: 'Vanishing tic-tac-toe: each side keeps only 3 pieces. Play a friend or the computer (minimax + alpha-beta).',
-};
+const game = gameById('lantern-line')!;
+
+export const metadata: Metadata = gameMetadata(game);
 
 export const viewport: Viewport = { themeColor: '#0e2333' };
 
 export default function Page() {
-  return <Game />;
+  return (
+    <>
+      <JsonLd data={gameJsonLd(game)} />
+      <Game />
+    </>
+  );
 }

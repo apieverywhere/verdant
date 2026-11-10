@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { CONTACT_EMAIL } from '@/lib/site';
 
 export const metadata: Metadata = {
-  title: 'Terms of Service · Verdant',
+  title: 'Terms of Service',
+  alternates: { canonical: '/terms' },
   description: 'The rules for using Verdant: free browser games, no accounts, fair play.',
 };
 
