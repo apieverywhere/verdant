@@ -18,5 +18,12 @@ export const SITE_URL = (
   'https://verdantverse.vercel.app'
 ).replace(/\/+$/, '');
 
+/** When the privacy policy and terms last changed (YYYY-MM-DD); shown on both pages and used as their sitemap `lastmod`. */
+export const LEGAL_UPDATED = '2026-11-08';
+
+/** "8 November 2026" for a YYYY-MM-DD date. */
+export const formatDate = (iso: string) =>
+  new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+
 /** Where people write about the site, their data or these terms. */
 export const CONTACT_EMAIL = 'tranantien12@gmail.com';

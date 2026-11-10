@@ -4,6 +4,8 @@ export const GAMES = [
     id: 'lantern-line',
     name: 'Lantern Line',
     href: '/lantern-line',
+    /** Last content change (YYYY-MM-DD), the sitemap `lastmod`; bump it when the page or game changes. */
+    updated: '2026-11-10',
     /** Search-result title after the name: what the game is, in the words people search for. */
     kind: 'Vanishing Tic-Tac-Toe in 3D',
     scene: 'Sunset Valley',
@@ -16,6 +18,7 @@ export const GAMES = [
     id: 'ember-and-tide',
     name: 'Ember & Tide',
     href: '/ember-and-tide',
+    updated: '2026-11-10',
     kind: '3D Four-in-a-Row Stacking Game',
     scene: 'Moonlit Ice Lake',
     description:
@@ -27,6 +30,7 @@ export const GAMES = [
     id: 'tidepool',
     name: 'Tidepool',
     href: '/tidepool',
+    updated: '2026-11-10',
     kind: 'Hex Marble-Pushing Strategy Game',
     scene: 'Lagoon at Dusk',
     description:

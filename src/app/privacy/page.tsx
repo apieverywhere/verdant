@@ -1,7 +1,7 @@
 /** `/privacy`: the privacy policy. */
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { CONTACT_EMAIL } from '@/lib/site';
+import { CONTACT_EMAIL, formatDate, LEGAL_UPDATED } from '@/lib/site';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy',
@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   description: 'What Verdant stores and which statistics it collects.',
 };
 
-const UPDATED = '8 November 2026';
+const UPDATED = formatDate(LEGAL_UPDATED);
 
 export default function PrivacyPage() {
   return (

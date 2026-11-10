@@ -1,7 +1,7 @@
 /** `/terms`: the terms of service for playing on Verdant. */
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { CONTACT_EMAIL } from '@/lib/site';
+import { CONTACT_EMAIL, formatDate, LEGAL_UPDATED } from '@/lib/site';
 
 export const metadata: Metadata = {
   title: 'Terms of Service',
@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   description: 'The rules for using Verdant: free browser games, no accounts, fair play.',
 };
 
-const UPDATED = '8 November 2026';
+const UPDATED = formatDate(LEGAL_UPDATED);
 
 export default function TermsPage() {
   return (

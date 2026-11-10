@@ -9,7 +9,7 @@ interface Props {
   onUnsupported: () => void;
 }
 
-const LABEL = 'Bàn cờ caro 3×3 trong thung lũng 3D lúc hoàng hôn. Kéo để xoay, cuộn để phóng to, nhấn vào ô để đánh.';
+const LABEL = 'A 3×3 board floating in a sunset valley. Drag to rotate, scroll to zoom, click a square to place a piece.';
 
 /** Mounts the three.js scene on a canvas; the scene lives outside React's render cycle. */
 export default function BoardScene({ view, onPick, onUnsupported }: Props) {

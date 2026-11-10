@@ -125,7 +125,7 @@ export default function Lobby() {
             <p>
               The games open straight in your browser, on a laptop or a phone. There is nothing to install, no account
               to create and nothing to pay. Sit next to a friend and take turns on the same screen, or play against the
-              computer on Dễ, Trung bình or Khó when you are on your own.
+              computer on Easy, Medium or Hard when you are on your own.
             </p>
             <p>
               I build Verdant on my own and add new games over time. If you have an idea, feedback or just want to say

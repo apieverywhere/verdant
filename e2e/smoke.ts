@@ -131,7 +131,7 @@ try {
   // --- vs computer
   await page.getByRole('button', { name: 'vs Computer' }).click();
   check('mode switch resets scores', (await page.getByTestId('score-x').innerText()) === '0');
-  check('difficulty selector visible', await page.getByRole('button', { name: 'Khó' }).isVisible());
+  check('difficulty selector visible', await page.getByRole('button', { name: 'Hard' }).isVisible());
   await clickCell(page, 4);
   check('AI thinking status', (await status(page)).includes('Computer is thinking'), await status(page));
   await page.waitForFunction(() => document.querySelector('[data-testid=status]')!.textContent!.includes('Your turn'), null, { timeout: 5000 });
@@ -163,7 +163,7 @@ try {
   const final = await status(page);
   check('hard AI does not lose to random play', !final.includes('You win'), final);
   // Easy AI lets games run long enough for X to hold 3 pieces; the hint must then name the vanishing piece.
-  await page.getByRole('button', { name: 'Dễ' }).click();
+  await page.getByRole('button', { name: 'Easy' }).click();
   for (let turn = 0; turn < 200 && hintChecks < 3; turn++) {
     const s = await status(page);
     if (s.includes('win') || s.includes('Draw')) { await page.getByRole('button', { name: 'New game' }).click(); continue; }
@@ -278,12 +278,12 @@ try {
   check('ember & tide: board locked after a win', (await stack(page, 6)) === '0');
 
   await page.getByRole('button', { name: 'vs Computer' }).click();
-  for (const label of ['Dễ', 'Trung bình', 'Khó']) check(`ember & tide: difficulty ${label} visible`, await page.getByRole('button', { name: label }).isVisible());
-  check('ember & tide: Khó is the default', (await page.getByRole('button', { name: 'Khó' }).getAttribute('aria-pressed')) === 'true');
-  await page.getByRole('button', { name: 'Trung bình' }).click();
-  check('ember & tide: difficulty can be changed', (await page.getByRole('button', { name: 'Trung bình' }).getAttribute('aria-pressed')) === 'true');
+  for (const label of ['Easy', 'Medium', 'Hard']) check(`ember & tide: difficulty ${label} visible`, await page.getByRole('button', { name: label }).isVisible());
+  check('ember & tide: Hard is the default', (await page.getByRole('button', { name: 'Hard' }).getAttribute('aria-pressed')) === 'true');
+  await page.getByRole('button', { name: 'Medium' }).click();
+  check('ember & tide: difficulty can be changed', (await page.getByRole('button', { name: 'Medium' }).getAttribute('aria-pressed')) === 'true');
   await page.screenshot({ path: `${SHOTS}/12-fire-water-difficulty.png` });
-  await page.getByRole('button', { name: 'Khó' }).click();
+  await page.getByRole('button', { name: 'Hard' }).click();
   await clickColumn(page, 12);
   check('computer thinking status', (await status(page)).includes('thinking'), await status(page));
   await page.waitForFunction(() => document.querySelector('[data-testid=status]')!.textContent!.includes('Your turn'), null, { timeout: 5000 });

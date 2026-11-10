@@ -6,9 +6,9 @@ import { useId, useState, type ReactNode } from 'react';
 import type { Difficulty, Mode } from '@/lib/game/types';
 
 const DIFFICULTIES: { id: Difficulty; label: string }[] = [
-  { id: 'easy', label: 'Dễ' },
-  { id: 'medium', label: 'Trung bình' },
-  { id: 'hard', label: 'Khó' },
+  { id: 'easy', label: 'Easy' },
+  { id: 'medium', label: 'Medium' },
+  { id: 'hard', label: 'Hard' },
 ];
 
 /** On phones the card shrinks to a round back-arrow link to the lobby; the title stays for screen readers. */
