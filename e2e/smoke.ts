@@ -39,6 +39,14 @@ async function clickColumn(page: Page, col: number) {
   await page.waitForTimeout(120);
 }
 
+/** Clicks a Canopy tile (or the climber standing on it) on the 3D canvas. */
+async function clickTile(page: Page, cell: number) {
+  const box = (await page.locator('canvas.scene').boundingBox())!;
+  const p = await page.evaluate((c) => (window as any).__canopyScene.tileScreenPosition(c), cell);
+  await page.mouse.click(box.x + p.x, box.y + p.y);
+  await page.waitForTimeout(120);
+}
+
 /** Steps through “How to play” to the end, checks navigation, closes with Escape; returns the step titles. */
 async function checkHelp(page: Page, game: string, steps: number): Promise<string[]> {
   await page.getByRole('button', { name: 'How to play' }).click();
@@ -205,7 +213,7 @@ try {
   await page.goto(URL, { waitUntil: 'networkidle' });
   await page.screenshot({ path: `${SHOTS}/7-lobby.png`, fullPage: true });
   check('lobby title', (await page.title()) === 'Verdant – Free 3D Board Games in Your Browser');
-  check('lobby lists all three games', (await page.locator('.game-card').count()) === 3);
+  check('lobby lists all four games', (await page.locator('.game-card').count()) === 4);
   check('lobby: call to action with the mascot', await page.getByRole('heading', { name: 'Interested in working with me?' }).isVisible() && (await page.locator('.lobby-cta-art img').evaluate((i: HTMLImageElement) => i.complete && i.naturalWidth > 0)));
   await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'About' }).click();
   // Anchor links scroll smoothly; wait for the glide to bring the About section to the top.
@@ -225,7 +233,7 @@ try {
   await firstVisit.close();
   check('footer: 3 social links and 2 legal links', (await page.getByRole('navigation', { name: 'Social media' }).getByRole('link').count()) === 3 && (await page.locator('.footer-social a[href="#"]').count()) === 0 && (await page.getByRole('navigation', { name: 'Legal and site links' }).getByRole('link').count()) === 2);
   const sitemapXml = await (await page.request.get(`${URL}/sitemap.xml`)).text();
-  check('sitemap.xml lists every public page', ['/lantern-line', '/ember-and-tide', '/tidepool', '/privacy', '/terms', '/sitemap'].every((p) => sitemapXml.includes(`${p}</loc>`)));
+  check('sitemap.xml lists every public page', ['/lantern-line', '/ember-and-tide', '/tidepool', '/canopy', '/privacy', '/terms', '/sitemap'].every((p) => sitemapXml.includes(`${p}</loc>`)));
   const robots = await (await page.request.get(`${URL}/robots.txt`)).text();
   check('robots.txt allows crawling and points to the sitemap', robots.includes('Allow: /') && /Sitemap: https?:\/\/\S+\/sitemap\.xml/.test(robots), robots.replace(/\n/g, ' | '));
   await page.getByRole('navigation', { name: 'Legal and site links' }).getByRole('link', { name: 'Privacy Policy' }).click();
@@ -310,6 +318,63 @@ try {
   await phone.screenshot({ path: `${SHOTS}/help-mobile.png` });
 
   await phone.close();
+
+  // --- Canopy
+  await page.goto(`${URL}/canopy`, { waitUntil: 'networkidle' });
+  await page.waitForFunction(() => !!(window as any).__canopyScene, null, { timeout: 15000 });
+  await page.waitForTimeout(800);
+  const tile = (col: number, row: number) => row * 5 + col;
+  const levels = () => page.evaluate(() => (window as any).__canopyScene.view.level as number[]);
+  check('canopy title', (await page.title()).includes('Canopy'));
+  check('canopy: Amber starts', (await status(page)).includes('Amber’s turn'), await status(page));
+  await checkHelp(page, 'canopy', 7);
+  await clickTile(page, tile(1, 4));
+  check('canopy: clicking a climber picks it up', (await status(page)).includes('gold marker'), await status(page));
+  await clickTile(page, tile(1, 3));
+  check('canopy: clicking a gold marker steps, then asks to grow', (await status(page)).includes('grow a tile'), await status(page));
+  await clickTile(page, tile(3, 4));
+  check('canopy: mid-turn, the other climber cannot be picked up', (await status(page)).includes('grow a tile'), await status(page));
+  await clickTile(page, tile(1, 2));
+  check('canopy: with nothing to cut, growing passes the turn', (await status(page)).includes('Violet’s turn'), await status(page));
+  // Violet plays a whole turn from the keyboard list.
+  await page.locator('[data-climber="2"]').focus();
+  await page.keyboard.press('Enter');
+  check('canopy keyboard: a picked-up climber lists the tiles it can step onto', (await page.locator('[data-target]').count()) === 5);
+  await page.locator(`[data-target="${tile(3, 1)}"]`).focus();
+  await page.keyboard.press('Enter');
+  check('canopy keyboard: after the step the list offers tiles to grow', (await page.locator(`[data-target="${tile(2, 2)}"]`).innerText()).startsWith('Grow'));
+  await page.locator(`[data-target="${tile(2, 2)}"]`).focus();
+  await page.keyboard.press('Enter');
+  check('canopy keyboard: the turn passes back to Amber', (await status(page)).includes('Amber’s turn'), await status(page));
+  // Amber steps between the two saplings, grows one tile and cuts the other sapling back.
+  await clickTile(page, tile(3, 4));
+  await clickTile(page, tile(2, 3));
+  await clickTile(page, tile(3, 3));
+  check('canopy: with a grown tree nearby, the turn goes on to cutting', (await status(page)).includes('cut a tree back'), await status(page));
+  check('canopy: Skip cutting is offered', await page.getByRole('button', { name: 'Skip cutting' }).isVisible());
+  check('canopy: the tree grown this turn is not offered for cutting', (await page.locator(`[data-target="${tile(3, 3)}"]`).count()) === 0);
+  await clickTile(page, tile(2, 2));
+  const afterCut = await levels();
+  check('canopy: clicking a coral arrow cuts the tree back and passes the turn', afterCut[tile(2, 2)] === 0 && (await status(page)).includes('Violet’s turn'), await status(page));
+  // Violet steps next to Amber's sapling, grows another tile and skips cutting.
+  await clickTile(page, tile(3, 1));
+  await clickTile(page, tile(3, 2));
+  await clickTile(page, tile(4, 2));
+  check('canopy: Violet may cut Amber’s sapling', (await status(page)).includes('cut a tree back'), await status(page));
+  await page.getByRole('button', { name: 'Skip cutting' }).click();
+  check('canopy: Skip cutting ends the turn', (await status(page)).includes('Amber’s turn'), await status(page));
+  await page.waitForTimeout(700);
+  await page.screenshot({ path: `${SHOTS}/13-canopy.png` });
+  await page.getByRole('button', { name: 'vs Computer' }).click();
+  check('canopy: Hard is the default', (await page.getByRole('button', { name: 'Hard' }).getAttribute('aria-pressed')) === 'true');
+  await clickTile(page, tile(3, 4));
+  await clickTile(page, tile(3, 3));
+  await clickTile(page, tile(3, 2));
+  check('canopy: computer thinking status', (await status(page)).includes('thinking'), await status(page));
+  await page.waitForFunction(() => document.querySelector('[data-testid=status]')!.textContent!.includes('Your turn'), null, { timeout: 15000 });
+  const grown = (await levels()).reduce((n, l) => n + l, 0);
+  check('canopy: the computer played a whole turn', grown >= 1 && grown <= 2, `${grown} growth stages on the board`);
+
   await page.goto(`${URL}/ember-and-tide`, { waitUntil: 'networkidle' });
 
   // --- The lobby's Play buttons return to the game played last

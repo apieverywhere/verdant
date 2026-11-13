@@ -38,6 +38,18 @@ export const GAMES = [
     genre: ['Board game', 'Strategy', 'Abstract strategy'],
     artBg: '#2f6f8f',
   },
+  {
+    id: 'canopy',
+    name: 'Canopy',
+    href: '/canopy',
+    updated: '2026-11-13',
+    kind: 'Tree-Growing Strategy Board Game',
+    scene: 'Forest Clearing at Dawn',
+    description:
+      'Amber vs Violet on a 5×5 forest board. Move a climber, grow a tree, cut one back, and light lanterns on 2 treetops to win. Free in your browser, 2 players or vs the computer.',
+    genre: ['Board game', 'Strategy', 'Abstract strategy'],
+    artBg: '#3f7a6a',
+  },
 ] as const;
 
 export type Game = (typeof GAMES)[number];

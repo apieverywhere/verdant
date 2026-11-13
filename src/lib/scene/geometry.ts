@@ -81,8 +81,8 @@ export class Geo {
     }
   }
 
-  /** UV sphere of radius R centred on the origin, with smooth (per-vertex) normals. */
-  sphere(R: number, nu: number, nv: number, c: RGB) {
+  /** UV sphere of radius R centred on `at` (the origin by default), with smooth (per-vertex) normals. */
+  sphere(R: number, nu: number, nv: number, c: RGB, at: Vec3 = [0, 0, 0]) {
     const P = (i: number, j: number): Vec3 => {
       const u = (i / nu) * Math.PI * 2, v = -Math.PI / 2 + (j / nv) * Math.PI;
       return [Math.cos(v) * Math.cos(u), Math.sin(v), Math.cos(v) * Math.sin(u)];
@@ -92,7 +92,7 @@ export class Geo {
         const a = P(i, j), b = P(i + 1, j), d = P(i + 1, j + 1), e = P(i, j + 1);
         // Wound counter-clockwise seen from outside, so front faces point outwards.
         for (const n of [a, d, b, a, e, d]) {
-          this.pos.push(n[0] * R, n[1] * R, n[2] * R);
+          this.pos.push(at[0] + n[0] * R, at[1] + n[1] * R, at[2] + n[2] * R);
           this.nor.push(n[0], n[1], n[2]);
           this.col.push(c[0], c[1], c[2]);
         }

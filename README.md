@@ -9,6 +9,7 @@ Sảnh game 3D chơi ngay trên trình duyệt. Cảnh low‑poly dựng bằng 
 | `/lantern-line` | **Lantern Line** (Tic‑Tac‑Toe 3×3) biến thể **vanishing**: mỗi bên chỉ giữ tối đa **3 quân**, đặt quân thứ 4 thì quân đặt sớm nhất của mình biến mất; máy chơi bằng **minimax + alpha‑beta pruning** |
 | `/ember-and-tide` | **Ember & Tide** (5×5×5, Fire vs Water): quân rơi vào 25 cột, cao tối đa 5; **4 quân liền nhau theo bất kỳ hướng 3D nào** là thắng |
 | `/tidepool` | **Tidepool** (bàn lục giác 61 lỗ, Pearl vs Coral): đẩy hàng bi, **đẩy 6 bi của đối thủ xuống biển** là thắng |
+| `/canopy` | **Canopy** (bàn 5×5, Amber vs Violet): đi một người leo, cho một ô cây mọc, có thể phá một cây lùi một nấc, **thắp đèn lồng trên 2 ngọn cây cùng lúc** là thắng |
 
 ![Sảnh game](e2e/screenshots/7-lobby.png)
 
@@ -26,7 +27,7 @@ bun run start        # chạy bản production (thêm -p 3123 để đổi cổn
 ## Kiểm thử
 
 ```bash
-bun test             # 74 unit test: luật chơi, luồng trận, AI của cả hai game
+bun test             # 128 unit test: luật chơi, luồng trận, AI của cả bốn game
 bun run typecheck    # TypeScript strict
 bun run verify:ai    # kiểm tra AI mức Khó tối ưu trên TOÀN BỘ 133 364 thế cờ (~5 phút)
 bun run e2e          # E2E bằng Chrome headless (cần server đang chạy ở cổng 3123)
@@ -70,6 +71,26 @@ Máy (Coral) có 3 mức (`src/lib/tidepool/ai.ts`, chạy trong Web Worker):
 
 Đo bằng `bun scripts/bench-tidepool.ts` (đấu cả ván, hai bên đổi lượt đi trước).
 
+## Luật Canopy
+
+1. Bàn 5×5 toàn rêu, mỗi bên 2 người leo. Amber đi trước ở ván đầu, sau đó người đi trước đổi luân phiên.
+2. Mỗi lượt có ba bước. **Đi**: chọn một người leo, bước sang 1 trong 8 ô xung quanh; lên cao tối đa 1 tầng, xuống bao nhiêu tầng cũng được; không vào ô có người leo hoặc ô đã nở hoa.
+3. **Mọc** (bắt buộc): cho một ô trống cạnh người leo vừa đi mọc thêm một nấc: rêu → cây non → cây nhỡ → ngọn cây → hoa.
+4. **Phá** (tùy chọn): phá một cây cạnh người leo đó lùi một nấc, hoặc bấm *Skip cutting*. Không phá được cây vừa cho mọc trong lượt, ô rêu và ô có người đứng. Phá ngọn cây thì đèn trên đó tắt; hoa bị phá thành ngọn cây (chưa có đèn). Không còn cây nào để phá thì lượt tự kết thúc.
+5. Bước lên **ngọn cây** thì thắp đèn lồng màu mình ở đó (đèn vẫn sáng khi rời đi); bước lên ngọn cây đang có đèn của đối thủ thì giành luôn đèn.
+6. Ngọn cây mọc thêm lần nữa thì **nở hoa**: không ai đứng được và đèn trên đó tắt.
+7. Ai có **2 đèn lồng màu mình sáng cùng lúc** là thắng. Đến lượt mà không bước được nước nào thì thua. Vì cây có thể bị phá, ván không có giới hạn: nếu giằng co mãi thì người chơi tự bấm *New game*.
+
+Máy (Violet) có 3 mức (`src/lib/canopy/ai.ts`, chạy trong Web Worker):
+
+| Mức | Cách chơi |
+|---|---|
+| Dễ | chỉ nhìn lượt của mình, 35% đi ngẫu nhiên |
+| Trung bình | cùng thuật toán với mức Khó nhưng chỉ 6 000 nút: thấy được đe dọa trực tiếp, không tính xa |
+| Khó | negamax + alpha‑beta đào sâu dần trên cả lượt (đi + mọc + phá) (`search.ts`), giới hạn 250 000 nút (~0,7 s/nước trên laptop, tối đa ~2 s, đọc 3–4 lượt) |
+
+Cây trên bàn (`src/lib/scene/trees.ts`) là cây low‑poly thật: thân cong có rễ và cành, tán gồm nhiều cụm lá; 4 nấc mọc là cùng một cây ở các tuổi khác nhau, đỉnh tán phẳng để người leo đứng.
+
 ## Luật Tic‑Tac‑Toe 3×3
 
 1. Bàn 3×3, X và O luân phiên; 3 quân thẳng hàng (ngang, dọc, chéo) là thắng.
@@ -105,11 +126,12 @@ cưỡng bức dài nhất là 17 ply — nên mức Khó dùng độ sâu 18.
 
 ```
 src/app/                 layout (font Be Vietnam Pro), các route, globals.css (token màu của design)
-src/components/          Lobby, Hud (HUD dùng chung), Game + BoardScene, FireWaterGame + FireWaterScene, TidepoolGame + TidepoolScene
+src/components/          Lobby, Hud (HUD dùng chung), Game + BoardScene, FireWaterGame + FireWaterScene, TidepoolGame + TidepoolScene, CanopyGame + CanopyScene
 src/lib/game/            Tic‑Tac‑Toe: types, rules (engine thuần), match (reducer trận), ai
 src/lib/fire-water/      Ember & Tide: rules, match, ai
 src/lib/tidepool/        Tidepool: rules, match, ai
-src/lib/scene/           SceneController, FireWaterController, TidepoolController (three.js), geometry, terrain, shaders
+src/lib/canopy/          Canopy: rules, match, ai, search
+src/lib/scene/           SceneController, FireWaterController, TidepoolController, CanopyController (three.js), geometry, terrain, shaders, trees
 tests/                   bun test + bộ giải chính xác
 scripts/verify-ai.ts     kiểm tra AI toàn bộ thế cờ
 scripts/bench-tidepool.ts  đấu thử các mức AI của Tidepool

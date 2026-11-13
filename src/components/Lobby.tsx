@@ -4,7 +4,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import tano from '@/assets/tano.png';
 import { GAMES, type GameId } from '@/lib/games';
-import { LagoonArt, MoonArt, SunsetArt } from './gameArt';
+import { ForestArt, LagoonArt, MoonArt, SunsetArt } from './gameArt';
 import PlayRecentLink from './PlayRecentLink';
 import { SiteFooter, SiteHeader } from './SiteChrome';
 
@@ -39,6 +39,12 @@ const CARDS: Record<GameId, { description: string; tags: string[]; art: ReactNod
     tags: ['3D', '2 players', 'vs Computer', 'Strategy'],
     art: <LagoonArt />,
     artBg: '#2f6f8f',
+  },
+  canopy: {
+    description: 'Amber vs Violet on a 5×5 forest board. Move a climber, grow a tree, cut one back, and light lanterns on 2 treetops to win.',
+    tags: ['3D', '2 players', 'vs Computer', 'Strategy'],
+    art: <ForestArt />,
+    artBg: '#3f7a6a',
   },
 };
 

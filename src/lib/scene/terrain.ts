@@ -101,3 +101,19 @@ export function lagoonTerrainH(x: number, z: number) {
   h += sstep(44, 105, r) * (10 + 44 * Math.pow(m, 1.6) + 8 * ridge) * low;
   return h;
 }
+
+/** Direction towards the rising sun over the Canopy clearing. */
+export const FOREST_SUN: [number, number, number] = (() => {
+  const v = [0.45, 0.12, -0.88], l = Math.hypot(v[0], v[1], v[2]);
+  return [v[0] / l, v[1] / l, v[2] / l];
+})();
+
+/** Forest clearing: flat grass around the board, rolling ground under the trees, wooded hills further out. */
+export function forestTerrainH(x: number, z: number) {
+  const r = Math.hypot(x, z);
+  let h = (fbm(x * 0.06 + 3, z * 0.06 + 8) - 0.5) * 0.8 * sstep(8, 16, r);
+  const m = fbm(x * 0.022 + 5, z * 0.022 + 9);
+  const ridge = 1 - Math.abs(2 * vnoise(x * 0.045 + 2, z * 0.045) - 1);
+  h += sstep(24, 110, r) * (6 + 34 * Math.pow(m, 1.5) + 7 * ridge);
+  return h;
+}

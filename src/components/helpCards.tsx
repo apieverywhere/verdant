@@ -1,4 +1,4 @@
-/** Illustrated "How to play" cards, converted from the design artboards (Main, Caro5, Tidepool). */
+/** Illustrated "How to play" cards, converted from the design artboards (Main, Caro5, Tidepool, Canopy). */
 import type { HelpCard } from './HowToPlay';
 
 export const TIC_TAC_TOE_HELP: HelpCard[] = [
@@ -130,6 +130,167 @@ export const TIDEPOOL_HELP: HelpCard[] = [
   {
     title: 'Move the camera',
     text: 'Drag to look around the board, scroll to zoom. Click an empty spot to clear your selection.',
+    art: (
+      <svg viewBox="0 0 200 120" role="img" aria-label="Drag to rotate the view, scroll the mouse wheel to zoom" className="help-art"><path d="M38 60a26 26 0 1 1 9 19.7" fill="none" stroke="#ffd27a" strokeWidth="4" strokeLinecap="round" /><path d="M38 87l9-7.3-1.5 10.5" fill="none" stroke="#ffd27a" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" /><text x="64" y="110" textAnchor="middle" fontSize="11" fontWeight="600" fill="#c3d6e3" fontFamily="sans-serif">Drag = rotate</text><path d="M134 21l6-6 6 6M134 87l6 6 6-6" fill="none" stroke="#ffd27a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /><rect x="124" y="28" width="32" height="50" rx="16" fill="none" stroke="#c3d6e3" strokeWidth="3" /><path d="M140 28v12" stroke="#c3d6e3" strokeWidth="2" /><rect x="137" y="36" width="6" height="11" rx="3" fill="#ffd27a" /><text x="140" y="110" textAnchor="middle" fontSize="11" fontWeight="600" fill="#c3d6e3" fontFamily="sans-serif">Scroll = zoom</text></svg>
+    ),
+  },
+];
+
+// ---------------------------------------------------------------- Canopy
+// Its drawings are assembled from a few parts (a tile's tree at each growth stage, a climber, a lantern) so
+// the trees in the help match the ones on the board.
+
+const SIDE = { X: { body: '#ffb347', head: '#ffe0a8', glow: '#ffb347' }, O: { body: '#8a7cf5', head: '#d2cbff', glow: '#a99cff' } } as const;
+/** Trunk width × height and crown radii for stages 1–4, with the crown's shaded and sunlit colours. */
+const TREE_ART = [
+  null,
+  { tw: 3, th: 7, rx: 9, ry: 6.5, dark: '#5c9c44', light: '#b4e06c' },
+  { tw: 4, th: 17, rx: 12, ry: 9, dark: '#3f8742', light: '#93cc5a' },
+  { tw: 5, th: 27, rx: 15, ry: 11, dark: '#2c6a3c', light: '#7ab852' },
+  { tw: 5, th: 29, rx: 16, ry: 13, dark: '#e27fa6', light: '#ffd6e3' },
+] as const;
+/** Height of the top of a stage's crown above the ground line: where a climber stands. */
+const standY = (stage: number, ground: number) => {
+  const t = TREE_ART[stage];
+  return t ? ground - t.th - t.ry * 2 + 3 : ground;
+};
+
+/** A moss tile centred on `x` with its tree at the given stage, standing on the ground line `y`. */
+const TreeTile = ({ x, y, stage }: { x: number; y: number; stage: number }) => {
+  const t = TREE_ART[stage];
+  return (
+    <g>
+      <rect x={x - 16} y={y} width="32" height="6" rx="2" fill="#6a9a5a" />
+      {t && (
+        <>
+          <rect x={x - t.tw / 2} y={y - t.th} width={t.tw} height={t.th + 1} fill="#6f4e37" />
+          <ellipse cx={x} cy={y - t.th - t.ry + 3} rx={t.rx} ry={t.ry} fill={t.dark} />
+          <ellipse cx={x - t.rx * 0.2} cy={y - t.th - t.ry * 1.25 + 3} rx={t.rx * 0.62} ry={t.ry * 0.55} fill={t.light} />
+          {stage === 4 && <circle cx={x + 5} cy={y - t.th - t.ry + 5} r="2" fill="#fff0f5" />}
+        </>
+      )}
+    </g>
+  );
+};
+
+/** A climber with its feet at (x, y). */
+const ClimberArt = ({ x, y, side }: { x: number; y: number; side: 'X' | 'O' }) => (
+  <g>
+    <rect x={x - 6} y={y - 14} width="12" height="14" rx="4" fill={SIDE[side].body} />
+    <circle cx={x} cy={y - 19} r="6" fill={SIDE[side].head} />
+  </g>
+);
+
+/** A lit lantern centred on (x, y); `out` draws the dashed outline of one that has gone out. */
+const LanternArt = ({ x, y, side, out }: { x: number; y: number; side?: 'X' | 'O'; out?: boolean }) =>
+  out || !side ? (
+    <circle cx={x} cy={y} r="5.5" fill="none" stroke="#9fb3c4" strokeWidth="1.6" strokeDasharray="2 2" />
+  ) : (
+    <g>
+      <circle cx={x} cy={y} r="10" fill={SIDE[side].glow} opacity="0.3" />
+      <circle cx={x} cy={y} r="5.5" fill={SIDE[side].glow} />
+    </g>
+  );
+
+const STAGE_LABELS = ['Moss', 'Sapling', 'Young tree', 'Treetop', 'Blossom'];
+
+export const CANOPY_HELP: HelpCard[] = [
+  {
+    title: 'The goal',
+    text: 'Each side has 2 climbers. Have a lantern in your colour lit on 2 treetops at the same time and you win. Amber starts round one, then the starter alternates. Against the computer, you are Amber.',
+    art: (
+      <svg viewBox="0 0 200 120" role="img" aria-label="Two treetops, each with a glowing Amber lantern; an Amber climber stands on the right one" className="help-art">
+        <TreeTile x={65} y={102} stage={3} />
+        <LanternArt x={65} y={standY(3, 102) - 14} side="X" />
+        <TreeTile x={135} y={102} stage={3} />
+        <ClimberArt x={135} y={standY(3, 102)} side="X" />
+        <LanternArt x={135} y={standY(3, 102) - 39} side="X" />
+      </svg>
+    ),
+  },
+  {
+    title: 'Move one climber',
+    text: 'Click one of your climbers, then a gold marker to step onto one of the 8 tiles around it, diagonals included. You can climb up at most 1 level, but drop down any number. Blossoms and other climbers block the way.',
+    art: (
+      <svg viewBox="0 0 200 120" role="img" aria-label="Left: a climber on a sapling steps up one level onto a young tree, which is allowed. Right: a climber on a sapling cannot jump up two levels onto a treetop." className="help-art">
+        <TreeTile x={30} y={106} stage={1} />
+        <ClimberArt x={30} y={standY(1, 106)} side="X" />
+        <TreeTile x={72} y={106} stage={2} />
+        <circle cx="72" cy={standY(2, 106) - 9} r="8" fill="none" stroke="#ffd27a" strokeWidth="2.4" strokeDasharray="4 3" />
+        <path d="M36 56 Q52 40 66 52" fill="none" stroke="#ffd27a" strokeWidth="2.6" strokeLinecap="round" />
+        <path d="M59 47l8 6-1-9" fill="none" stroke="#ffd27a" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M100 14 V110" stroke="rgba(255,255,255,0.18)" strokeWidth="1.5" />
+        <TreeTile x={128} y={106} stage={1} />
+        <ClimberArt x={128} y={standY(1, 106)} side="X" />
+        <TreeTile x={172} y={106} stage={3} />
+        <path d="M134 56 Q150 28 166 44" fill="none" stroke="#9fb3c4" strokeWidth="2.4" strokeLinecap="round" strokeDasharray="4 4" />
+        <path d="M145 22l10 10M155 22l-10 10" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
+    title: 'Then grow a tile',
+    text: 'After moving, click a green sprout to grow one tile next to that climber by one stage: moss, sapling, young tree, treetop, blossom. You grow every turn, so think about who gets to climb it next.',
+    art: (
+      <svg viewBox="0 0 200 120" role="img" aria-label="Five growth stages from left to right: moss, sapling, young tree, treetop, blossom" className="help-art">
+        {STAGE_LABELS.map((label, stage) => (
+          <g key={label}>
+            <TreeTile x={23 + stage * 38.5} y={90} stage={stage} />
+            <text x={23 + stage * 38.5} y="111" textAnchor="middle" fontSize="7.2" fontWeight="600" fill="#c3d6e3" fontFamily="sans-serif">{label}</text>
+          </g>
+        ))}
+        <path d="M40.5 90l3 3-3 3M79 90l3 3-3 3M117.5 90l3 3-3 3M156 90l3 3-3 3" fill="none" stroke="#ffd27a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
+    title: 'Then cut one back, or skip',
+    text: "After growing, you may cut one tree next to your climber back by one stage, but not the one you just grew. Cutting a treetop puts its lantern out; a blossom becomes a treetop again. Click a coral arrow, or Skip cutting.",
+    art: (
+      <svg viewBox="0 0 200 120" role="img" aria-label="A treetop with a Violet lantern is cut back to a young tree and the lantern goes out" className="help-art">
+        <TreeTile x={58} y={104} stage={3} />
+        <LanternArt x={58} y={standY(3, 104) - 14} side="O" />
+        <path d="M100 52 V76" stroke="#ff8a5c" strokeWidth="5" strokeLinecap="round" />
+        <path d="M91 70 L100 82 L109 70 Z" fill="#ff8a5c" />
+        <TreeTile x={142} y={104} stage={2} />
+        <LanternArt x={142} y={standY(2, 104) - 14} out />
+        <text x="100" y="112" textAnchor="middle" fontSize="9" fontWeight="600" fill="#c3d6e3" fontFamily="sans-serif">or skip</text>
+      </svg>
+    ),
+  },
+  {
+    title: 'Light and steal lanterns',
+    text: "Step onto a treetop to light a lantern in your colour. It stays lit after you leave. Step onto your rival's lit treetop and the lantern switches to your colour.",
+    art: (
+      <svg viewBox="0 0 200 120" role="img" aria-label="A Violet climber steps from a young tree onto a treetop with an Amber lantern; the lantern turns Violet" className="help-art">
+        <TreeTile x={22} y={106} stage={2} />
+        <ClimberArt x={22} y={standY(2, 106)} side="O" />
+        <TreeTile x={62} y={106} stage={3} />
+        <LanternArt x={62} y={standY(3, 106) - 14} side="X" />
+        <path d="M88 62 H110 M104 56l7 6-7 6" fill="none" stroke="#ffd27a" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+        <TreeTile x={136} y={106} stage={2} />
+        <TreeTile x={176} y={106} stage={3} />
+        <ClimberArt x={176} y={standY(3, 106)} side="O" />
+        <LanternArt x={176} y={standY(3, 106) - 39} side="O" />
+      </svg>
+    ),
+  },
+  {
+    title: 'Blossoms block',
+    text: "Grow a treetop once more and it bursts into blossom: nobody can stand there and its lantern goes out, until someone cuts it back. Use it to snuff your rival's lantern or wall off a climb. If you can't move on your turn, you lose.",
+    art: (
+      <svg viewBox="0 0 200 120" role="img" aria-label="A treetop with an Amber lantern grows into a blossom and the lantern goes out" className="help-art">
+        <TreeTile x={58} y={104} stage={3} />
+        <LanternArt x={58} y={standY(3, 104) - 14} side="X" />
+        <path d="M88 66 H112 M106 60l7 6-7 6" fill="none" stroke="#ffd27a" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+        <TreeTile x={142} y={104} stage={4} />
+        <LanternArt x={142} y={standY(4, 104) - 14} out />
+      </svg>
+    ),
+  },
+  {
+    title: 'Move the camera',
+    text: 'Drag to look around the clearing, scroll to zoom. Click an empty spot to put a climber back down.',
     art: (
       <svg viewBox="0 0 200 120" role="img" aria-label="Drag to rotate the view, scroll the mouse wheel to zoom" className="help-art"><path d="M38 60a26 26 0 1 1 9 19.7" fill="none" stroke="#ffd27a" strokeWidth="4" strokeLinecap="round" /><path d="M38 87l9-7.3-1.5 10.5" fill="none" stroke="#ffd27a" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" /><text x="64" y="110" textAnchor="middle" fontSize="11" fontWeight="600" fill="#c3d6e3" fontFamily="sans-serif">Drag = rotate</text><path d="M134 21l6-6 6 6M134 87l6 6 6-6" fill="none" stroke="#ffd27a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /><rect x="124" y="28" width="32" height="50" rx="16" fill="none" stroke="#c3d6e3" strokeWidth="3" /><path d="M140 28v12" stroke="#c3d6e3" strokeWidth="2" /><rect x="137" y="36" width="6" height="11" rx="3" fill="#ffd27a" /><text x="140" y="110" textAnchor="middle" fontSize="11" fontWeight="600" fill="#c3d6e3" fontFamily="sans-serif">Scroll = zoom</text></svg>
     ),

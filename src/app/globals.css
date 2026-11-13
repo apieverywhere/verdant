@@ -20,8 +20,8 @@
   color-scheme: dark;
 }
 
-/* Moonlit ice lake palette for Ember & Tide; the Tidepool lagoon uses the same HUD glass. */
-.moon, .lagoon {
+/* Moonlit ice lake palette for Ember & Tide; the Tidepool lagoon and the Canopy forest use the same HUD glass. */
+.moon, .lagoon, .forest {
   --bg: #0e2333;
   --ink: #f0f6fa;
   --ink-strong: #ffffff;
@@ -61,7 +61,7 @@ html, body {
   overflow: hidden;
   background: var(--bg);
 }
-.stage.moon, .stage.lagoon { min-height: 600px; }
+.stage.moon, .stage.lagoon, .stage.forest { min-height: 600px; }
 
 .scene {
   position: absolute;
@@ -209,6 +209,18 @@ html, body {
   font-size: 15px;
   font-weight: 700;
 }
+/* Canopy: ends the turn without cutting a tree back. */
+.skip-cut {
+  min-height: 44px;
+  padding: 0 20px;
+  border-radius: 999px;
+  border: 1px solid var(--gold);
+  background: var(--gold);
+  color: var(--on-gold);
+  font-size: 15px;
+  font-weight: 800;
+}
+.skip-cut:hover { background-color: var(--gold-hover); }
 .ghost {
   min-height: 48px;
   padding: 0 16px;
