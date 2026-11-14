@@ -1,6 +1,8 @@
 # Design — Caro 3×3 “Vanishing”
 
 > Giai đoạn 2 của SDD: mô tả *xây như thế nào*. Mỗi mục tham chiếu requirement tương ứng (R‑x.y).
+>
+> **Cập nhật 15/11/2026.** §1 và §4–§5 mô tả bản đầu tiên (một trang, chưa có sảnh). Hiện tại: game ở route `/lantern-line` (`src/app/lantern-line/page.tsx`), `<html lang>` theo ngôn ngữ người chơi chọn (mặc định `en`), HUD dùng chung `components/Hud.tsx`, cảnh tải lười sau màn chờ Tano. Cảnh đã dựng lại ngày 14/11 (xem §4.1). Phần dùng chung xem [game-lobby/design.md](../game-lobby/design.md). Luật (§2) và AI (§3) không đổi.
 
 ## 1. Kiến trúc tổng quan
 
@@ -179,13 +181,22 @@ Port 1‑1 từ design (vốn viết bằng WebGL thuần) sang three.js:
 Màu: `ColorManagement.enabled = false`, `outputColorSpace = LinearSRGBColorSpace` → giá trị màu
 được dùng nguyên như shader gốc, cho ra đúng tông màu của design.
 
+### 4.1 Bản dựng lại (14/11/2026)
+
+- Hồ nước dùng shader nước kiểu đầm phá (chung cách làm với Tidepool); bàn đứng trên đảo cỏ giữa 4 đèn đá có lửa lập loè.
+- Quân là vật liệu vật lý phủ bóng, phản chiếu env map PMREM nhỏ (64) dựng từ bầu trời; mặt trời thấp đổ bóng thật (shadow map 1024, chỉ vẽ lại khi có chuyển động hoặc đang có đường thắng).
+- `FrameBudget` giảm độ phân giải trên GPU yếu (xem [game-lobby/design.md §6](../game-lobby/design.md#6-cảnh-3d-dùng-chung)).
+- Bảng ánh xạ ở trên vẫn đúng cho bầu trời, sương mù, địa hình và đèn trời.
+
+### 4.2 Quân cờ
+
 Quân cờ: mỗi ô có sẵn 1 mesh X và 1 mesh O (vật liệu riêng để anim độc lập).
 Trạng thái anim từng ô: `placedAt`, `vanishAt`. Quân sắp biến mất: opacity dao động 0.45–0.8,
 nảy nhẹ. Quân biến mất: 450 ms thu nhỏ → 0, bay lên 1.6, opacity → 0.
 
 ## 5. Giao diện (R4, R7)
 
-Giữ nguyên bố cục/màu của design: panel kính `rgba(22,18,44,.62)` + `backdrop-filter: blur(12px)`,
+*(Bản đầu tiên; bảng màu hiện tại là token “deep-sea” trong `globals.css`, xem game-lobby.)* Giữ nguyên bố cục/màu của design: panel kính `rgba(22,18,44,.62)` + `backdrop-filter: blur(12px)`,
 nhấn vàng `#ffd27a`, X `#ff7a6b`, O `#4fd8cc`, nền `#1a1d4e`, font Be Vietnam Pro.
 Bổ sung theo yêu cầu biến thể: nhóm độ khó (khi đấu máy), chip “quân sắp biến mất” trong thanh
 trạng thái, dòng hướng dẫn luật. Lưới 9 nút sr‑only phục vụ bàn phím và E2E test.

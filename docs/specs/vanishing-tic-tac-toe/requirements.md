@@ -3,6 +3,7 @@
 > Giai đoạn 1 của quy trình **Spec-Driven Development (SDD)**: mô tả *cái gì* cần xây.
 > Thiết kế kỹ thuật ở [design.md](./design.md), kế hoạch thực thi ở [tasks.md](./tasks.md).
 > Tiêu chí chấp nhận viết theo dạng EARS (`KHI … THÌ hệ thống PHẢI …`).
+> Cập nhật 15/11/2026: game nay là **Lantern Line** ở route `/lantern-line` trong sảnh Verdant. Phần dùng chung (HUD, màn chờ, chế độ mặc định, hiệu năng cảnh) theo [game-lobby §G](../game-lobby/requirements.md#g--khung-game-dùng-chung); chữ trên giao diện theo [settings-i18n](../settings-i18n/). Các nhãn trích dẫn trong spec này (“Ván mới”, “Máy đang nghĩ…”) là bản tiếng Việt của giao diện.
 
 ## Bối cảnh
 
@@ -11,7 +12,7 @@ Khi đặt quân thứ 4, quân đặt sớm nhất của chính người đó b
 ván đấu không thể hòa theo kiểu cổ điển — cần luật hòa riêng.
 
 Giao diện theo design “Caro 3×3 – Thung lũng hoàng hôn”: cảnh 3D (three.js) một bàn cờ
-trên đảo đá giữa thung lũng lúc hoàng hôn, HUD kính mờ phía trên/dưới.
+trên đảo cỏ giữa thung lũng lúc hoàng hôn, HUD kính mờ phía trên/dưới.
 
 Stack bắt buộc: **Next.js** (App Router, TypeScript), cài đặt / chạy / build bằng **Bun**,
 3D bằng **three.js**, AI bằng **minimax + alpha‑beta pruning**.
@@ -51,13 +52,14 @@ Stack bắt buộc: **Next.js** (App Router, TypeScript), cài đặt / chạy /
 2. KHI đổi chế độ THÌ hệ thống PHẢI reset bàn và tỉ số.
 3. Trong chế độ đấu máy, người chơi là X, máy là O.
 4. KHI tới lượt máy THÌ hệ thống PHẢI hiển thị “Máy đang nghĩ…”, chặn thao tác người chơi và đi sau ~600 ms.
+5. KHI mở trang THÌ hệ thống PHẢI bắt đầu ở chế độ “Đấu với máy”, mức Dễ (G1.1).
 
 ## R5 — AI (minimax + alpha‑beta)
 
 **User story:** Là người chơi, tôi muốn đấu với máy có nhiều mức độ khó.
 
 1. AI PHẢI dùng thuật toán minimax (dạng negamax) với cắt tỉa alpha‑beta, giới hạn độ sâu và hàm lượng giá heuristic.
-2. Hệ thống PHẢI có 3 mức: **Dễ**, **Vừa**, **Khó**, mặc định **Khó**; đổi mức PHẢI bắt đầu ván mới.
+2. Hệ thống PHẢI có 3 mức: **Dễ**, **Vừa**, **Khó**; mở trang ở mức **Dễ** (R4.5); đổi mức PHẢI bắt đầu ván mới.
 3. Ở mọi mức, KHI AI có nước thắng ngay THÌ AI PHẢI đi nước đó (trừ mức Dễ được phép “lỡ tay” ngẫu nhiên).
 4. Ở mức Vừa và Khó, KHI đối thủ đe dọa thắng ở nước kế tiếp và có thể chặn THÌ AI PHẢI chặn.
 5. Ở mức Khó, AI PHẢI chơi tối ưu: không bao giờ thua từ thế không thua, và luôn thắng từ thế thắng
@@ -68,7 +70,7 @@ Stack bắt buộc: **Next.js** (App Router, TypeScript), cài đặt / chạy /
 
 ## R6 — Cảnh 3D & hiệu ứng (giữ nguyên design)
 
-1. Cảnh PHẢI dựng bằng three.js: bầu trời hoàng hôn (gradient, mặt trời, sao lấp lánh), địa hình núi low‑poly, mặt nước gợn sóng phản chiếu, rừng thông, đảo đá, khung bàn viền vàng, 4 đèn đá ở góc bàn, đèn trời bay lên.
+1. Cảnh PHẢI dựng bằng three.js: bầu trời hoàng hôn (gradient, mặt trời, sao lấp lánh), địa hình núi low‑poly, hồ nước gợn sóng phản chiếu, rừng thông, đảo cỏ, khung bàn viền vàng, 4 đèn đá lập loè ở góc bàn, đèn trời bay lên. Quân phủ bóng phản chiếu bầu trời, mặt trời thấp đổ bóng thật (dựng lại 14/11/2026).
 2. Hiệu ứng PHẢI giữ như design:
    - quân rơi xuống (từ cao 3.4, phóng to 0.55→1, easing cubic‑out, 460 ms), quân X xoay nửa vòng khi rơi;
    - ô hover đổi màu theo người tới lượt;
@@ -80,7 +82,7 @@ Stack bắt buộc: **Next.js** (App Router, TypeScript), cài đặt / chạy /
 
 ## R7 — HUD & khả năng truy cập
 
-1. HUD PHẢI có: tiêu đề + phụ đề, bảng điểm (X / Hòa / O với nhãn “Bạn/Máy” hoặc “Người X/Người O”), thanh trạng thái `aria-live`, nhóm chế độ, nhóm độ khó (chỉ khi đấu máy), nút “Ván mới”, “Xóa tỉ số”, dòng hướng dẫn.
+1. HUD PHẢI có: tiêu đề + phụ đề, bảng điểm (X / Hòa / O với nhãn “Bạn/Máy” hoặc “Người chơi X/Người chơi O”), nút “?” và nút Cài đặt, thanh trạng thái `aria-live`, nhóm chế độ, nhóm độ khó (chỉ khi đấu máy), nút “Ván mới”, “Xóa tỉ số”, dòng hướng dẫn.
 2. Bàn cờ PHẢI chơi được bằng bàn phím / trình đọc màn hình qua lưới 9 nút ẩn (sr‑only, hiện khi focus) có `aria-label` mô tả ô.
 3. Giao diện PHẢI dùng được ở chiều rộng điện thoại (HUD xuống dòng, không cuộn ngang).
 

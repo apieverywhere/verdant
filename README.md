@@ -13,6 +13,9 @@ Sảnh game 3D chơi ngay trên trình duyệt. Cảnh low‑poly dựng bằng 
 
 ![Sảnh game](e2e/screenshots/7-lobby.png)
 
+Mọi game mở ở chế độ đấu máy, mức Dễ. Nút **Cài đặt** (bánh răng, trên header và trong mỗi game) cho chọn
+ngôn ngữ **English / Tiếng Việt** và chỉnh âm lượng nhạc nền, hiệu ứng (âm thanh sẽ có sau; mức chọn được lưu sẵn).
+
 ## Chạy nhanh
 
 Yêu cầu: [Bun](https://bun.sh) ≥ 1.4 (`curl -fsSL https://bun.sh/install | bash`). Không cần cài Node.
@@ -45,13 +48,13 @@ Chrome cài sẵn trên macOS, đổi bằng biến `CHROME_PATH`.
 3. 4 quân liền nhau theo bất kỳ hướng nào (ngang, dọc, chéo, chéo không gian; 302 đường) là thắng.
 4. Đủ 125 quân mà không ai thắng thì hòa. Mỗi “New game”, người thua ván trước đi trước.
 
-Máy có 3 mức (`src/lib/fire-water/ai.ts`, spec: [`docs/specs/game-lobby/`](docs/specs/game-lobby/)):
+Máy có 3 mức (`src/lib/fire-water/ai.ts`, spec: [`docs/specs/ember-and-tide/`](docs/specs/ember-and-tide/)):
 
 | Mức | Cách chơi |
 |---|---|
 | Dễ | 35% đi ngẫu nhiên, còn lại chấm điểm theo đường còn sống, không nhìn ô phía trên |
 | Trung bình | luôn thắng ngay và chặn, tránh làm lộ ô phía trên cho đối thủ |
-| Khó | negamax + alpha‑beta đào sâu dần (`search.ts`), giới hạn 30 000 nút, đọc được khoảng 4–5 nước |
+| Khó | negamax + alpha‑beta đào sâu dần (`search.ts`), giới hạn 300 000 nút (~0,5–1 s/nước trong Web Worker), đọc 6–7 ply |
 
 ## Luật Tidepool
 
@@ -126,11 +129,12 @@ cưỡng bức dài nhất là 17 ply — nên mức Khó dùng độ sâu 18.
 
 ```
 src/app/                 layout (font Be Vietnam Pro), các route, globals.css (token màu của design)
-src/components/          Lobby, Hud (HUD dùng chung), Game + BoardScene, FireWaterGame + FireWaterScene, TidepoolGame + TidepoolScene, CanopyGame + CanopyScene
+src/components/          Lobby, Hud (HUD dùng chung), SettingsDialog, Game + BoardScene, FireWaterGame + FireWaterScene, TidepoolGame + TidepoolScene, CanopyGame + CanopyScene
 src/lib/game/            Tic‑Tac‑Toe: types, rules (engine thuần), match (reducer trận), ai
 src/lib/fire-water/      Ember & Tide: rules, match, ai
 src/lib/tidepool/        Tidepool: rules, match, ai
 src/lib/canopy/          Canopy: rules, match, ai, search
+src/lib/settings.ts, i18n.ts  cài đặt (ngôn ngữ, âm lượng) và từ điển Anh/Việt
 src/lib/scene/           SceneController, FireWaterController, TidepoolController, CanopyController (three.js), geometry, terrain, shaders, trees
 tests/                   bun test + bộ giải chính xác
 scripts/verify-ai.ts     kiểm tra AI toàn bộ thế cờ
@@ -141,12 +145,19 @@ docs/specs/…             spec SDD: requirements → design → tasks
 
 ## Quy trình phát triển (SDD)
 
-Dự án theo **Spec‑Driven Development**: mọi tính năng bắt đầu từ spec trong `docs/specs/`
-([`game-lobby`](docs/specs/game-lobby/), [`vanishing-tic-tac-toe`](docs/specs/vanishing-tic-tac-toe/)):
+Dự án theo **Spec‑Driven Development**: mọi tính năng bắt đầu từ spec trong `docs/specs/`.
+Mục lục, quy ước và trạng thái từng spec ở [`docs/specs/README.md`](docs/specs/README.md).
 
-1. [requirements.md](docs/specs/vanishing-tic-tac-toe/requirements.md) — user story + tiêu chí chấp nhận (EARS), đánh số R1–R8.
-2. [design.md](docs/specs/vanishing-tic-tac-toe/design.md) — kiến trúc, mô hình dữ liệu, thuật toán AI, port cảnh 3D, rủi ro.
-3. [tasks.md](docs/specs/vanishing-tic-tac-toe/tasks.md) — danh sách việc, mỗi việc trỏ về requirement và cách kiểm chứng.
+| Spec | Phạm vi |
+|---|---|
+| [`vanishing-tic-tac-toe`](docs/specs/vanishing-tic-tac-toe/) | Lantern Line |
+| [`game-lobby`](docs/specs/game-lobby/) | Sảnh, hướng dẫn chơi, khung game dùng chung |
+| [`ember-and-tide`](docs/specs/ember-and-tide/) | Ember & Tide |
+| [`tidepool`](docs/specs/tidepool/) | Tidepool |
+| [`canopy`](docs/specs/canopy/) | Canopy |
+| [`site-seo`](docs/specs/site-seo/) | Trang phụ, pháp lý, SEO, thống kê |
+| [`settings-i18n`](docs/specs/settings-i18n/) | Cài đặt: Anh/Việt, âm lượng (âm thanh làm sau) |
 
-Test được đặt tên theo requirement (`describe('R2 — vanishing rule')`…) để truy vết hai chiều.
-Khi đổi luật hay AI: sửa spec trước → cập nhật test → sửa code → `bun test && bun run verify:ai`.
+Mỗi spec có ba file: `requirements.md` (user story + tiêu chí EARS) → `design.md` (kiến trúc, dữ liệu,
+thuật toán) → `tasks.md` (việc cần làm, mỗi việc trỏ về requirement và cách kiểm chứng).
+Khi đổi luật hay AI: sửa spec trước → cập nhật test → sửa code → `bun test` (và `bun run verify:ai` với Lantern Line).

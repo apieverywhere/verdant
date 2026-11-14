@@ -1,49 +1,60 @@
-# Design — Verdant (sảnh game) & Ember & Tide 5×5×5
+# Design — Verdant: sảnh, hướng dẫn chơi, khung game dùng chung
 
 > Giai đoạn 2 của SDD.
 
-## 1. Route
+## 1. Route và trang
 
 | Route | File | Nội dung |
 |---|---|---|
-| `/` | `src/app/page.tsx` → `components/Lobby.tsx` | Sảnh, Server Component thuần |
-| `/lantern-line` | `src/app/lantern-line/page.tsx` → `components/Game.tsx` | Lantern Line (caro 3×3) |
-| `/ember-and-tide` | `src/app/ember-and-tide/page.tsx` → `components/FireWaterGame.tsx` | Ember & Tide |
+| `/` | `src/app/page.tsx` → `components/Lobby.tsx` | Sảnh |
+| `/lantern-line` | `src/app/lantern-line/page.tsx` → `components/Game.tsx` + `BoardScene.tsx` | Lantern Line |
+| `/ember-and-tide` | `src/app/ember-and-tide/page.tsx` → `FireWaterGame.tsx` + `FireWaterScene.tsx` | Ember & Tide |
+| `/tidepool` | `src/app/tidepool/page.tsx` → `TidepoolGame.tsx` + `TidepoolScene.tsx` | Tidepool |
+| `/canopy` | `src/app/canopy/page.tsx` → `CanopyGame.tsx` + `CanopyScene.tsx` | Canopy |
+| `/sitemap`, `/privacy`, `/terms` | xem [site-seo](../site-seo/design.md) | Trang phụ |
 
-Tên và route của game nằm ở `src/lib/games.ts`. Route cũ `/tic-tac-toe`, `/fire-and-water` chuyển hướng 308 sang route mới (`next.config.ts`). Thư mục code nội bộ (`lib/game`, `lib/fire-water`, `FireWaterGame`) giữ tên cũ.
+- `src/lib/games.ts` là nguồn duy nhất về danh sách game: `id`, tên, route, ngày `updated`, mô tả SEO, cảnh, màu nền thẻ. Thứ tự trong mảng là thứ tự trên sảnh, phần tử đầu là game mặc định.
+- Route cũ chuyển hướng 308 trong `next.config.ts`. Thư mục code nội bộ giữ tên cũ (`lib/game` = Lantern Line, `lib/fire-water` = Ember & Tide).
+- Mọi trang đều prerender tĩnh. Trang game là Server Component chỉ khai báo `metadata`, `viewport.themeColor`, JSON-LD rồi render component game (client).
 
-“Game chơi gần nhất”: mỗi trang game gọi `rememberGame(id)` khi mở (`lib/recentGame.ts`, `localStorage`). `PlayRecentLink` đọc giá trị qua `useSyncExternalStore`; server luôn render game mặc định, nên không lệch hydration, và trình duyệt chặn storage thì vẫn về game mặc định.
+## 2. Sảnh
 
-Mỗi page tự khai báo `metadata` và `viewport.themeColor` theo màu nền của cảnh.
+- `Lobby.tsx` là Client Component (để chữ theo ngôn ngữ đang chọn) nhưng vẫn prerender bằng tiếng Anh. Thẻ game lấy mô tả từ `t.cards[id]` và tag từ `t.tags`; hình cảnh nằm ở `components/gameArt.tsx`, dùng chung với ảnh chia sẻ.
+- Header và footer (`SiteChrome.tsx`) dùng chung cho sảnh và `/sitemap`. Trên sảnh, link điều hướng là anchor trong trang (`#games`, `#about`); ở trang khác thì trỏ về `/#…`.
+- **Game chơi gần nhất:** mỗi trang game gọi `rememberGame(id)` khi mở (`lib/recentGame.ts`, localStorage `verdant:last-game`). `PlayRecentLink` đọc qua `useSyncExternalStore`, server luôn render game mặc định nên không lệch hydration; trình duyệt chặn storage thì vẫn về game mặc định; tab khác chơi game thì tab này cập nhật theo sự kiện `storage`.
 
-## 2. Mô hình dữ liệu
+## 3. Hướng dẫn chơi
 
-Chỉ số ô: `i = x + 5·z + 25·y`, chỉ số cột: `col = x + 5·z`. Dùng lại `Player`/`Cell`/`Outcome`: X = Fire, O = Water.
+- `HowToPlay.tsx`: nút “?” và `<dialog>` gốc gọi `showModal()`. Modal gốc cho sẵn bẫy focus, Esc, trả focus và làm trơ cảnh phía sau. Bấm vào chính `<dialog>` (không phải nội dung) được coi là bấm ra nền.
+- Nút Back dùng `aria-disabled` thay cho `disabled`, vì nút bị disable sẽ làm focus rơi ra ngoài hộp thoại.
+- `helpCards.tsx`: mỗi thẻ là `{ title: Localized, text: Localized, art }`. Văn bản hai ngôn ngữ nằm cạnh hình của nó; nhãn chữ trong SVG dùng `<Tr en vi />`. Hình của Canopy ghép từ các phần (cây theo nấc, người leo, đèn) để khớp với cây trên bàn.
 
-`src/lib/fire-water/` tách biệt khỏi `lib/game/` vì hai game khác nhau ở mọi luật:
+## 4. HUD dùng chung
 
-- `rules.ts` — engine thuần: `createGame`, `applyMove(state, col)`, `dropCell`, `stackHeight`, bảng `LINES` và `CELL_LINES`.
-- `ai.ts` — `chooseColumn(state, difficulty, random)`: Easy và Medium chấm điểm một lớp theo thiết kế, Hard gọi `search.ts`.
-- `search.ts` — negamax + alpha-beta, đào sâu dần trong giới hạn số nút; đếm quân theo từng đường để cập nhật lượng giá và phát hiện thắng tăng dần thay vì quét 302 đường mỗi nút. Thắng ngay và chặn bắt buộc được xử lý trước khi rẽ nhánh. Đường càng cao càng nhẹ ký (mỗi tầng giảm một nửa) vì ô trên cao chỉ đi được khi cột bên dưới đã đầy.
-- `ai.worker.ts` — chạy `chooseColumn` trong Web Worker; `FireWaterGame` gửi thế cờ, chờ ít nhất 650 ms “đang nghĩ” rồi mới đi. Trình duyệt không có Worker thì tính trên luồng chính.
-- `match.ts` — reducer trận, cùng hình dạng action với caro.
+`components/Hud.tsx`: `TitleCard`, `Scoreboard`/`Score`/`Divider`, `HudButtons` (nút “?” do game truyền vào, nút Cài đặt cố định), `StatusPill`, `DifficultyPicker`, `Toolbar`, `NoWebGL`.
 
-## 3. Cảnh 3D
+- Màu lấy từ biến CSS. Class trên `.stage` (`.moon`, `.lagoon`, `.forest`) đổi bộ biến theo cảnh, nên không có CSS riêng cho từng game.
+- `Toolbar` trên điện thoại thu vào thẻ “Options” (`aria-expanded`), bấm New game thì tự đóng.
+- Mọi chữ lấy từ `useT()` (xem [settings-i18n](../settings-i18n/design.md)).
 
-`FireWaterController` là bản song song của `SceneController`: cùng hợp đồng (nhận view thuần, tự suy ra hoạt ảnh bằng diff), cùng quy ước ánh sáng và `glow()`. Dùng lại `Geo`, `waterMaterial`; thêm `Geo.extrude`, `moonSkyMaterial` (cực quang), `moonTerrainH`.
+## 5. Luồng trận dùng chung
 
-- Pool 125 mesh, đổi `geometry` theo chủ quân thay vì giữ 250 mesh.
-- Picking giải tích như thiết kế: mặt bàn trước, rồi ray với từng hình trụ cột (thân + nắp) lấy giao gần nhất; Raycaster chỉ cấp tia. Nhờ vậy bấm vào chồng quân cao vẫn trúng đúng cột.
+- Mỗi game có reducer thuần `match.ts` với cùng nhóm action: `newGame`, `resetScores`, `setMode`, `setDifficulty`, và các nước đi mang `source: 'human' | 'ai'`. Reducer từ chối nước đi sai nguồn (người không đi thay máy và ngược lại).
+- Đổi chế độ hoặc độ khó: bàn mới, xoá tỉ số. Chọn lại đúng giá trị đang có thì không làm gì.
+- Người đi trước: Lantern Line và Ember & Tide dùng `nextStarter` (`lib/game/match.ts`), người thua đi trước, hoà hoặc bỏ dở thì luân phiên. Tidepool và Canopy luân phiên mỗi ván.
+- Trang game tạo trận bằng `initialMatch('ai', 'easy')` (G1.1). Mặc định trong chữ ký hàm vẫn là `'hard'` để test dùng.
+- `gameId` tăng mỗi ván mới: cảnh 3D dựa vào nó để đặt lại quân mà không chạy hoạt ảnh.
 
-## 4. Vòng đời WebGL
+## 6. Cảnh 3D dùng chung
 
-Điều hướng SPA tạo canvas mới cho mỗi lần vào game, nên `dispose()` phải trả context ngay thay vì chờ GC. Không thể gọi `forceContextLoss()` vô điều kiện: Strict Mode chạy lại effect trên chính canvas đó, context mất thì cảnh trắng. Vì cleanup của `useEffect` chạy sau khi DOM đã gỡ, `canvas.isConnected` phân biệt được unmount thật với lần chạy lại.
+- **Hợp đồng controller:** mỗi game có một controller trong `src/lib/scene/` (`SceneController`, `FireWaterController`, `TidepoolController`, `CanopyController`). Controller không giữ luật chơi: nhận `view` thuần, tự suy ra hoạt ảnh bằng cách so với view trước, gọi lại `onPick` khi người chơi bấm. Picking là phép tính giải tích (Raycaster chỉ cấp tia).
+- **Tải lười:** component game nạp component cảnh bằng `next/dynamic` với `ssr: false`; component cảnh gọi `onReady` ngay khi controller dựng xong cảnh và nhận view đầu tiên. `SceneLoader` phủ lên cho tới khi `ready || noGL`. Tano chỉ dùng transform và opacity (CSS) nên vẫn chạy khi luồng chính bận dựng cảnh.
+- **Hiệu năng (G1.6):** env map PMREM nhỏ (64) cho phản chiếu của quân; shadow map 1024 với `autoUpdate = false`, chỉ vẽ lại trong khoảng thời gian sau mỗi thay đổi; `FrameBudget` (`frameBudget.ts`) giảm `pixelRatio` từng bước khi khung hình chậm, tối đa còn một nửa, và không tăng lại để tránh hình ảnh nhấp nháy độ nét. `pixelRatio` tối đa 1,75.
+- **Vòng đời WebGL (G1.8):** điều hướng SPA tạo canvas mới mỗi lần vào game, nên `dispose()` phải trả context ngay thay vì chờ GC. Không thể gọi `forceContextLoss()` vô điều kiện vì Strict Mode chạy lại effect trên cùng canvas. Cleanup của `useEffect` chạy sau khi DOM đã gỡ, nên `canvas.isConnected` phân biệt được unmount thật với lần chạy lại.
+- **Màn hình dọc:** camera tự lùi theo FOV ngang để bàn luôn vừa khung, và hạ điểm nhìn để bàn không bị HUD dưới che.
 
-## 5. HUD & theme
+## 7. Khác biệt có chủ đích so với canvas
 
-`components/Hud.tsx` gom phần chung: `TitleCard`, `Score`, `StatusPill`, `Toolbar`. Màu lấy từ biến CSS; class `.moon` trên `.stage` đổi bộ biến sang bảng màu hồ băng, nên không có CSS riêng cho từng game.
-
-## 6. Khác biệt có chủ đích so với canvas
-
-- Artboard Main vẽ caro thường với AI minimax không biến mất. Game thật giữ luật vanishing, độ khó và AI đã kiểm chứng (L2.1), và thêm dòng gợi ý luật vào phụ đề.
-- Hai placeholder trong canvas không đưa lên bản chạy: `[Game #3]` thành “More games”, `[Contact / social links]` bỏ đi cho tới khi có link thật.
+- Artboard Main vẽ caro thường. Game thật giữ luật vanishing và AI đã kiểm chứng.
+- Placeholder `[Game #3]` của canvas thành thẻ “More games”.
+- Medium của Tidepool là AI 2-ply của design, còn Hard là AI tìm kiếm mới (xem [tidepool](../tidepool/design.md)).

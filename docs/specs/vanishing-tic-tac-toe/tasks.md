@@ -19,3 +19,8 @@
 - [x] **T10. Tài liệu** — README: cách chạy, luật, kiến trúc, AI. _(R8.3)_
 - [x] **T11. Ẩn gợi ý quân sắp biến mất ở chế độ 2 người** — chỉ hiện khi đấu với máy. _(R2.4)_
   - Kiểm chứng: `e2e/smoke.ts` (không có gợi ý ở PvP; có gợi ý khi X có 3 quân trong chế độ đấu máy).
+- [x] **T12. Đưa vào sảnh Verdant** — đổi tên thành Lantern Line, route `/lantern-line` (redirect từ `/tic-tac-toe`), HUD dùng chung, nút “?” hướng dẫn. _(xem [game-lobby](../game-lobby/tasks.md))_
+- [x] **T13. Dựng lại cảnh** — hồ nước, đảo cỏ, đèn đá lập loè, quân vật liệu vật lý, bóng đổ, `FrameBudget`. _(R6.1)_
+- [x] **T14. Mở ở Đấu máy, mức Dễ.** _(R4.5, R5.2)_
+  - Kiểm chứng: `e2e/smoke.ts` (“lantern-line opens against the computer”, “lantern-line: Easy is the default”).
+- [x] **T15. Chữ song ngữ** — trạng thái, gợi ý quân sắp biến mất, nhãn ô bàn phím qua `t.ttt`. _(xem [settings-i18n](../settings-i18n/))_

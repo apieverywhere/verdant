@@ -1,55 +1,37 @@
-# Requirements — Verdant (sảnh game) & Ember & Tide 5×5×5
+# Requirements — Verdant: sảnh, hướng dẫn chơi, khung game dùng chung
 
-> Giai đoạn 1 của SDD. Nguồn thiết kế: canvas “Verdant – Multi-game website” (trước đây “Game Lobby”) (artboard Home, Main, Caro5).
-> Caro 3×3 giữ nguyên spec ở [`../vanishing-tic-tac-toe/`](../vanishing-tic-tac-toe/); ở đây chỉ ghi phần thay đổi.
+> Giai đoạn 1 của SDD. Nguồn thiết kế: canvas “Verdant – Multi-game website” (artboard Home, Main, Caro5, Tidepool, Canopy, Sitemap).
+> Luật từng game nằm ở spec riêng: [Lantern Line](../vanishing-tic-tac-toe/), [Ember & Tide](../ember-and-tide/), [Tidepool](../tidepool/), [Canopy](../canopy/).
+> Trang phụ và SEO: [site-seo](../site-seo/). Cài đặt và ngôn ngữ: [settings-i18n](../settings-i18n/).
 
-## L1 — Sảnh game
+## L — Sảnh game
 
-- **L1.1** Trang `/` hiển thị sảnh: header (Games, About, Play now), hero, danh sách game, thẻ “Coming soon”, băng CTA, footer. Mục “About” cuộn tới băng CTA và vẫn thấy trọn linh vật.
-- **L1.2** Mỗi game đang chạy có thẻ dẫn tới route riêng: `/lantern-line` (Lantern Line, trước là Tic-Tac-Toe 3×3), `/ember-and-tide` (Ember & Tide, trước là Fire & Water 5×5×5). Route cũ PHẢI chuyển hướng vĩnh viễn sang route mới.
-- **L1.3** Từ mỗi trang game có liên kết “← Verdant” quay về `/`.
-- **L1.4** Sảnh dùng được ở chiều rộng 390 px, không cuộn ngang; vùng bấm tối thiểu 44 px.
-- **L1.5** Chuyển qua lại giữa các trang nhiều lần không được làm rò rỉ WebGL context.
-- **L1.6** Cuối sảnh có băng CTA “Interested in working with me?” với linh vật Tano và footer đen: mạng xã hội, link Terms of Service (`/terms`) và Privacy Policy (`/privacy`), bản quyền, Sitemap (`/sitemap`), logo Verdant. Chữ trên site xưng ngôi thứ nhất số ít (I / me / my). Sitemap chỉ liệt kê trang đã có; link mạng xã hội chưa có đích nên tạm là `#`.
-- **L1.7** Nút “Play now” ở header và nút Play ở hero đưa tới game chơi gần nhất trên trình duyệt này (nút hero ghi “Play <tên game>”); chưa chơi game nào thì tới game mặc định Lantern Line.
+- **L1.1** Trang `/` hiển thị sảnh gồm: header (logo, Games, About, Play now, nút Cài đặt), hero, lưới game, thẻ “More games / Coming soon”, mục About, băng CTA và footer.
+- **L1.2** Mỗi game đang chạy có thẻ (hình cảnh, nhãn NEW, mô tả, tag, nút Play) dẫn tới route riêng: `/lantern-line`, `/ember-and-tide`, `/tidepool`, `/canopy`. Danh sách lấy từ `src/lib/games.ts` và tiêu đề ghi “N games live”.
+- **L1.3** Route cũ `/tic-tac-toe` và `/fire-and-water` PHẢI chuyển hướng vĩnh viễn (308) sang `/lantern-line` và `/ember-and-tide`.
+- **L1.4** Từ mỗi trang game có liên kết “← Verdant” về `/`. Trên điện thoại, liên kết này thu thành nút tròn mũi tên.
+- **L1.5** Mục “About” trên header cuộn mượt tới mục About (ba đoạn giới thiệu site) ở giữa trang.
+- **L1.6** Cuối sảnh có băng CTA “Interested in working with me?” với linh vật Tano, và footer: Facebook, Instagram, LinkedIn của tác giả, link Terms of Service và Privacy Policy, bản quyền, Sitemap, logo. Không link nào trỏ tới `#`, trừ nút “Connect now” của băng CTA (chưa có đích).
+- **L1.7** Nút “Play now” trên header và nút “Play <tên game>” ở hero PHẢI đưa tới game chơi gần nhất trên trình duyệt này. Lần đầu vào thì tới game mặc định Lantern Line.
+- **L1.8** Sảnh dùng được ở chiều rộng 390 px: không cuộn ngang, vùng bấm tối thiểu 44 px.
 
-## L2 — Caro 3×3 trong hệ sinh thái
+## H — Hướng dẫn chơi
 
-- **L2.1** Luật vanishing, độ khó và AI giữ nguyên (R1–R5).
-- **L2.2** Toàn bộ chữ chuyển sang tiếng Anh theo thiết kế; phần thiết kế không có (gợi ý biến mất) dịch cùng giọng. Riêng nhãn độ khó của mọi game ghi tiếng Việt: Dễ / Trung bình / Khó.
+- **H1.1** Mỗi trang game có nút “?” ở góc phải trên. Bấm vào mở hộp thoại “How to play” dạng slider: mỗi lần một bước có hình minh hoạ, nút Back / Next (bước cuối là “Got it” và đóng hộp thoại), chấm tiến độ và “n / N”, phím ← → để chuyển bước. Mở lại luôn bắt đầu từ bước 1.
+- **H1.2** Hộp thoại là modal: focus nằm trong hộp thoại; Esc, nút đóng, “Got it” hay bấm ra nền đều đóng; focus quay về nút “?”; cảnh 3D phía sau không nhận thao tác.
+- **H1.3** Nội dung PHẢI đúng luật đang chạy (ví dụ thẻ “Full board = draw” của canvas không áp dụng cho caro vanishing, được thay bằng thẻ luật 3 quân).
+- **H1.4** Dùng được ở 390 px: hộp thoại vừa màn hình và tự cuộn.
+- **H1.5** Chữ trên thẻ (tiêu đề, nội dung, nhãn trong hình) PHẢI theo ngôn ngữ đang chọn (I1).
 
-## H1 — Hướng dẫn chơi
+## G — Khung game dùng chung
 
-- **H1.1** Mỗi trang game có nút “?” cạnh bảng điểm; bấm vào mở hộp thoại “How to play” dạng slider: mỗi lần một bước có hình minh họa, nút Back / Next (bước cuối là “Got it” để đóng), chấm tiến độ và “n / N”, phím ← → để chuyển bước; mở lại luôn bắt đầu từ bước 1.
-- **H1.2** Hộp thoại là modal: focus nằm trong hộp thoại, Esc / nút đóng / “Got it” / bấm ra nền đều đóng, và focus quay về nút “?”; cảnh 3D phía sau không nhận thao tác.
-- **H1.3** Nội dung phải đúng luật đang chạy. Thẻ “Full board = draw” của canvas Tic-Tac-Toe mô tả caro thường nên được thay bằng thẻ luật vanishing (tối đa 3 quân, hòa khi lặp thế cờ 3 lần).
-- **H1.4** Dùng được ở 390 px: các thẻ xếp một cột và hộp thoại tự cuộn.
-
-## F1 — Luật Ember & Tide
-
-- **F1.1** Bàn 5×5, mỗi ô là một cột chứa tối đa 5 quân; Fire (X) và Water (O) luân phiên.
-- **F1.2** Khi chọn một ô, quân rơi xuống vị trí thấp nhất còn trống của cột; cột đầy thì nước đi không hợp lệ.
-- **F1.3** 4 quân liền nhau theo bất kỳ hướng nào trong 13 hướng 3D (302 đường) là thắng.
-- **F1.4** Đủ 125 quân mà không ai thắng thì hòa.
-
-## F2 — Luồng trận
-
-- **F2.1** Hỗ trợ 2 người và đấu máy; đổi chế độ thì xóa tỉ số, Fire đi trước.
-- **F2.2** “New game” giữ tỉ số; người thua ván trước đi trước, sau ván hòa hoặc ván bỏ dở thì đổi luân phiên (cùng luật R1.2 của Tic-Tac-Toe). “Reset score” xóa tỉ số, Fire đi trước.
-- **F2.3** Khi đấu máy, người chơi là Fire, máy là Water; người không thể đi thay máy.
-
-## F3 — AI
-
-- **F3.1** Có 3 mức Easy / Medium / Hard, mặc định Hard; chọn lại mức bắt đầu ván mới và xóa tỉ số.
-- **F3.2** Easy: 35% đi ngẫu nhiên, còn lại chấm điểm theo đường còn sống, không nhìn ô phía trên. Người mới thắng được.
-- **F3.3** Medium: luôn thắng ngay nếu có thể, nếu không thì chặn; tránh làm lộ ô phía trên để đối thủ thắng; kèm nhiễu nhỏ để mỗi ván một khác.
-- **F3.4** Hard: tìm kiếm alpha-beta nhiều nước, thấy được bẫy hai đường, thắng áp đảo Medium khi tự đấu.
-- **F3.5** Máy tính nghĩ trong Web Worker nên cảnh 3D không bao giờ bị giật dù Hard nghĩ lâu (khoảng 0,5–1 s mỗi nước, sâu 6–7 nước); có giới hạn theo số nút nên kết quả không phụ thuộc tốc độ máy. Hard không được thua chắc chỉ sau 3 nước khi Fire mở ở ô giữa.
-
-## F4 — Cảnh 3D & giao diện
-
-- **F4.1** Cảnh hồ băng dưới trăng: cực quang, sao, núi tuyết, thông, đảo băng, đèn trời.
-- **F4.2** Quân hình trụ có dấu lửa/giọt nước, rơi từ trên xuống; thanh vàng nối đường thắng.
-- **F4.3** Rê chuột hiện quân mờ ở vị trí sẽ rơi xuống; nhấn vào ô hoặc vào chồng quân đều chọn cột đó.
-- **F4.4** Kéo để xoay, cuộn để phóng to; trên màn hình dọc camera tự lùi để thấy đủ bàn.
-- **F4.5** Có lưới nút bàn phím và thông báo trạng thái `aria-live`; không có WebGL thì hiện thông báo.
+- **G1.1** Mọi game PHẢI mở ở chế độ **Đấu máy**, mức **Dễ**, người chơi đi trước. Người chơi đổi sang 2 người hoặc mức khác bằng thanh công cụ.
+- **G1.2** HUD giống nhau ở mọi game: thẻ tiêu đề, bảng điểm, nút “?” và nút Cài đặt, thanh trạng thái `aria-live`, thanh công cụ (chế độ, độ khó khi đấu máy, New game, Reset score), dòng hướng dẫn điều khiển.
+- **G1.3** Trên điện thoại: hàng trên gồm nút quay về, bảng điểm, nút “?” và nút Cài đặt, cùng một hàng; thanh công cụ ẩn sau thẻ “Options” ở đáy; ẩn dòng gợi ý và dòng hướng dẫn điều khiển.
+- **G1.4** Trong lúc cảnh 3D đang tải và dựng, PHẢI hiện màn chờ Tano (nổi giận, nổ tung, cháy đen rồi hồi lại) cùng dòng “Loading…”. Màn chờ mờ đi khi cảnh sẵn sàng hoặc khi trình duyệt không có WebGL.
+- **G1.5** three.js và cảnh chỉ tải sau khung trang (lazy), để trang hiện ngay.
+- **G1.6** Cảnh 3D PHẢI mượt trên GPU yếu: độ phân giải tự giảm (tối đa còn một nửa) khi khung hình chậm và không tăng lại; bóng đổ chỉ vẽ lại khi có vật chuyển động.
+- **G1.7** Máy tính nghĩ trong Web Worker để cảnh không bao giờ giật; luôn có khoảng “đang nghĩ” tối thiểu ~600–650 ms. Trình duyệt không có Worker thì tính trên luồng chính.
+- **G1.8** Chuyển qua lại giữa các trang nhiều lần không được làm rò rỉ WebGL context.
+- **G1.9** Không có WebGL thì hiện thông báo và vẫn chơi được bằng bàn phím (Tab).
+- **G1.10** Mỗi game có bàn điều khiển bàn phím ẩn (hiện khi được focus) với `aria-label` mô tả từng ô, quân hoặc nước đi.
