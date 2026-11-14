@@ -1,13 +1,16 @@
 /**
- * three.js scene for the board: sunset valley, lake, pines, stone island, board and sky lanterns.
- * Holds no game rules — it receives a `SceneView` and derives animations by diffing views.
+ * three.js scene for Lantern Line: a sunset valley and its lake, and a meadow island where the 3×3 board stands
+ * between four glowing stone lanterns while paper lanterns rise into the sky. Pieces are lacquered and mirror the
+ * sunset; the low sun casts real shadows. Holds no game rules — it receives a `SceneView` and derives animations by diffing views.
  * See docs/specs/vanishing-tic-tac-toe/design.md §4.
  */
 import * as THREE from 'three';
 import type { Cell, Outcome, Player } from '../game/types';
-import { Geo, hexRgb, type RGB } from './geometry';
-import { skyMaterial, waterMaterial } from './shaders';
+import { FrameBudget } from './frameBudget';
+import { Geo, hexRgb, mix, shade, type RGB, type Vec3 } from './geometry';
+import { lagoonWaterMaterial, skyMaterial } from './shaders';
 import { hash2, rng, SUN_SKY, terrainH, type Rng } from './terrain';
+import { bush, pine as meadowPine } from './trees';
 
 export interface SceneView {
   board: Cell[];
@@ -25,10 +28,10 @@ export interface SceneView {
 const COL = {
   sky: { top: hexRgb('#0b1d2c'), mid: hexRgb('#2f5f80'), hor: hexRgb('#f4b07c'), fog: hexRgb('#7d97a8'), sun: hexRgb('#ffd6a2') },
   light: { sun: [1.0, 0.82, 0.66] as RGB, sky: [0.42, 0.48, 0.62] as RGB, gnd: [0.2, 0.2, 0.24] as RGB },
-  water: hexRgb('#2b5f78'),
-  sand: hexRgb('#ab917e'), grass: hexRgb('#4a6c55'), grass2: hexRgb('#5c7b5a'), rock: hexRgb('#3f5266'), rock2: hexRgb('#5f748a'), snow: hexRgb('#ece5f1'),
+  water: { deep: hexRgb('#235a74'), shallow: hexRgb('#3f8f96'), foam: hexRgb('#e8eee6') },
+  sand: hexRgb('#ab917e'), grass: hexRgb('#4a6c55'), grass2: hexRgb('#5c7b5a'), meadow: hexRgb('#6f9a58'), meadow2: hexRgb('#8fb060'), shore: hexRgb('#8a8068'), rock: hexRgb('#3f5266'), rock2: hexRgb('#5f748a'), snow: hexRgb('#ece5f1'),
   pine: hexRgb('#2e5048'), pine2: hexRgb('#3a5f50'), trunk: hexRgb('#4b3a38'),
-  frame: hexRgb('#1f3346'), trim: hexRgb('#d6ad6c'), cell: hexRgb('#f0e5d1'),
+  frame: hexRgb('#1f3346'), frame2: hexRgb('#16273a'), trim: hexRgb('#d6ad6c'), cell: hexRgb('#f0e5d1'),
   X: hexRgb('#ff6f5e'), O: hexRgb('#3fd2c6'), gold: hexRgb('#ffd27a'), lantern: hexRgb('#ffb45a'),
 };
 const LIGHT_DIR = new THREE.Vector3(-0.45, 0.62, -0.64).normalize();
@@ -39,7 +42,16 @@ const FOV = 0.85; // radians, as in the design
 const DEFAULT_DIST = 19;
 /** Half-width (world units) that must stay visible: the board plus its corner lanterns. */
 const BOARD_FIT = 6.2;
+/** How far the orbit point drops on landscape screens so the board clears the bottom HUD. */
+const LANDSCAPE_DROP = 0.7;
+const TAU = Math.PI * 2;
+/** Where the lake meets the island; the foam follows this radius. */
+const SHORE = 10.1;
+/** Stone lanterns off the corners of the board; they also warm the grass around them. */
+const LAMPS: [number, number][] = [[4.9, 4.9], [4.9, -4.9], [-4.9, 4.9], [-4.9, -4.9]];
 const DROP_MS = 460;
+/** How long after a change the shadow map keeps being redrawn: long enough for any drop or vanish. */
+const SHADOW_MS = 1200;
 const VANISH_MS = 450;
 const WIN_DELAY_MS = 380;
 const BAR_GROW_MS = 420;
@@ -49,7 +61,7 @@ const cellX = (i: number) => ((i % 3) - 1) * CELL_GAP;
 const cellZ = (i: number) => (Math.floor(i / 3) - 1) * CELL_GAP;
 
 interface PieceAnim {
-  mesh: THREE.Mesh<THREE.BufferGeometry, THREE.MeshLambertMaterial>;
+  mesh: THREE.Mesh<THREE.BufferGeometry, THREE.MeshPhysicalMaterial>;
   placedAt: number;
   /** 0 = not vanishing; otherwise the time the vanish animation started. */
   vanishAt: number;
@@ -63,6 +75,7 @@ export class SceneController {
   private clock0 = performance.now();
   private raf = 0;
   private lastT = 0;
+  private budget = new FrameBudget();
   private resizeObs: ResizeObserver;
   private handlers: [string, EventListener, AddEventListenerOptions | boolean][] = [];
 
@@ -76,11 +89,14 @@ export class SceneController {
   private cells: THREE.Mesh<THREE.BufferGeometry, THREE.MeshLambertMaterial>[] = [];
   private pieces: Record<Player, PieceAnim[]> = { X: [], O: [] };
   private bar!: THREE.Mesh<THREE.BufferGeometry, THREE.MeshLambertMaterial>;
+  private env!: THREE.WebGLRenderTarget;
+  private lampGlow!: THREE.MeshLambertMaterial;
   private lanterns!: THREE.InstancedMesh;
   private lanternData: { x: number; z: number; ph: number; sp: number; sw: number; s: number }[] = [];
 
   private view: SceneView | null = null;
   private winAt = 0;
+  private shadowsUntil = 0;
   autoRotate = true;
 
   constructor(private canvas: HTMLCanvasElement, private onPick: (cell: number) => void) {
@@ -94,7 +110,16 @@ export class SceneController {
     // Intensity π: three's Lambert BRDF divides by π, this restores the design's lighting formula.
     this.scene.add(new THREE.HemisphereLight(new THREE.Color(...COL.light.sky), new THREE.Color(...COL.light.gnd), Math.PI));
     const sun = new THREE.DirectionalLight(new THREE.Color(...COL.light.sun), Math.PI);
-    sun.position.copy(LIGHT_DIR);
+    sun.position.copy(LIGHT_DIR).multiplyScalar(40);
+    // The sun's shadow covers the island only; the valley is too far away to need one.
+    this.renderer.shadowMap.enabled = true;
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(1024, 1024);
+    // The scene is mostly still, so the shadow map is redrawn only while something moves (see frame()).
+    this.renderer.shadowMap.autoUpdate = false;
+    Object.assign(sun.shadow.camera, { left: -13, right: 13, top: 13, bottom: -13, near: 5, far: 80 });
+    sun.shadow.bias = -0.0004;
+    sun.shadow.normalBias = 0.03;
     this.scene.add(sun);
 
     this.buildScene();
@@ -125,33 +150,51 @@ export class SceneController {
     this.sky.renderOrder = -1;
     this.scene.add(this.sky);
 
-    this.scene.add(new THREE.Mesh(this.buildWorld().toGeometry(), this.lambert()));
+    this.scene.add(new THREE.Mesh(this.buildTerrain().toGeometry(), this.lambert()));
+
+    // Everything on the island is one mesh that casts and receives the sun's shadow.
+    const island = new Geo(), lamps = new Geo();
+    this.buildIsland(island, lamps, rng(41));
+    const set = new THREE.Mesh(island.toGeometry(), this.lambert());
+    set.castShadow = set.receiveShadow = true;
+    this.scene.add(set);
+    this.lampGlow = this.glow(this.lambert(), COL.lantern, 0.9);
+    this.scene.add(new THREE.Mesh(lamps.toGeometry(), this.lampGlow));
 
     const S = 340, wg = new THREE.PlaneGeometry(S * 2, S * 2).rotateX(-Math.PI / 2);
-    this.water = new THREE.Mesh(wg, waterMaterial({
-      base: COL.water, light: LIGHT_DIR.toArray(), sunCol: COL.light.sun, skyCol: COL.light.sky, gndCol: COL.light.gnd,
-      fog: COL.sky.fog, fogDensity: FOG_DENSITY, spec: 1.4,
+    this.water = new THREE.Mesh(wg, lagoonWaterMaterial({
+      deep: COL.water.deep, shallow: COL.water.shallow, foam: COL.water.foam, light: LIGHT_DIR.toArray(), sun: SUN_SKY,
+      sunCol: COL.light.sun, skyCol: COL.light.sky, gndCol: COL.light.gnd, fog: COL.sky.fog, fogDensity: FOG_DENSITY, shore: SHORE,
     }));
     this.scene.add(this.water);
+    this.env = this.buildEnv();
 
     const cellGeo = new Geo();
     cellGeo.box(0, BOARD_TOP - 0.09, 0, 2.05, 0.18, 2.05, COL.cell);
     const cg = cellGeo.toGeometry();
     const xg = new Geo();
-    xg.box(0, 0.17, 0, 1.62, 0.32, 0.34, COL.X, Math.PI / 4);
-    xg.box(0, 0.17, 0, 1.62, 0.32, 0.34, COL.X, -Math.PI / 4);
+    // X: two crossed bars, each with a lighter cap that catches the sun
+    for (const ry of [Math.PI / 4, -Math.PI / 4]) {
+      xg.box(0, 0.16, 0, 1.66, 0.3, 0.38, COL.X, ry);
+      xg.box(0, 0.335, 0, 1.56, 0.05, 0.28, shade(COL.X, 1.12), ry);
+    }
     const og = new Geo();
-    og.torus(0.56, 0.2, 28, 12, COL.O, 0.2);
+    og.torus(0.56, 0.21, 40, 14, COL.O, 0.21);
     const pieceGeo = { X: xg.toGeometry(), O: og.toGeometry() };
 
     for (let i = 0; i < 9; i++) {
       const cell = new THREE.Mesh(cg, this.lambert());
       cell.position.set(cellX(i), 0, cellZ(i));
       cell.userData.cell = i;
+      cell.receiveShadow = true;
       this.cells.push(cell);
       this.scene.add(cell);
       for (const p of ['X', 'O'] as const) {
-        const mesh = new THREE.Mesh(pieceGeo[p], this.lambert({ transparent: true }));
+        // Clear-coated lacquer that mirrors the sunset; transparent so a piece can fade as it vanishes.
+        const mesh = new THREE.Mesh(pieceGeo[p], new THREE.MeshPhysicalMaterial({
+          vertexColors: true, transparent: true, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.1, envMap: this.env.texture, envMapIntensity: 0.9,
+        }));
+        mesh.castShadow = mesh.receiveShadow = true;
         mesh.visible = false;
         this.pieces[p].push({ mesh, placedAt: 0, vanishAt: 0 });
         this.scene.add(mesh);
@@ -178,13 +221,29 @@ export class SceneController {
   }
 
   /** Design's emission: colour = mix(lit, base·1.3, e) → scale diffuse by (1−e), add base·1.3·e. */
-  private glow(m: THREE.MeshLambertMaterial, base: RGB, e: number, tint: RGB = [1, 1, 1]) {
+  private glow<M extends THREE.MeshLambertMaterial | THREE.MeshPhysicalMaterial>(m: M, base: RGB, e: number, tint: RGB = [1, 1, 1]) {
     m.color.setRGB(tint[0] * (1 - e), tint[1] * (1 - e), tint[2] * (1 - e));
     m.emissive.setRGB(base[0] * tint[0] * 1.3 * e, base[1] * tint[1] * 1.3 * e, base[2] * tint[2] * 1.3 * e);
     return m;
   }
 
-  private buildWorld(): Geo {
+  /** What the pieces reflect: the sunset sky over a dark floor standing in for the board, prefiltered once. */
+  private buildEnv(): THREE.WebGLRenderTarget {
+    const s = new THREE.Scene(), dome = new THREE.Mesh(this.sky.geometry, this.sky.material);
+    dome.scale.setScalar(50);
+    dome.renderOrder = -1;
+    const floor = new THREE.Mesh(new THREE.CircleGeometry(80, 24).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: new THREE.Color(0.3, 0.32, 0.3) }));
+    floor.position.y = -1.5;
+    s.add(dome, floor);
+    const pmrem = new THREE.PMREMGenerator(this.renderer), rt = pmrem.fromScene(s, 0, 0.1, 200, { size: 64 }) // small pieces only need a coarse reflection;
+    pmrem.dispose();
+    floor.geometry.dispose();
+    floor.material.dispose();
+    return rt;
+  }
+
+  /** The valley: shores, slopes, snow-capped peaks and the pines along the lake. */
+  private buildTerrain(): Geo {
     const g = new Geo(), N = 150, S = 330, st = S / N, H: [number, number, number][] = [];
     for (let j = 0; j <= N; j++) {
       for (let i = 0; i <= N; i++) {
@@ -208,8 +267,7 @@ export class SceneController {
       else if (h > 30) c = COL.rock2;
       else if (h < 14 && ly > 0.72) c = h < 6 ? COL.grass2 : COL.grass;
       else c = COL.rock;
-      const k = 0.94 + R() * 0.12;
-      return [c[0] * k, c[1] * k, c[2] * k];
+      return shade(c, 0.94 + R() * 0.12);
     };
     for (let jj = 0; jj < N; jj++) {
       for (let ii = 0; ii < N; ii++) {
@@ -218,7 +276,6 @@ export class SceneController {
         if (Math.max(a[1], c[1], d[1]) > -0.8) g.tri(a, c, d, tcol(a, c, d), 'up');
       }
     }
-    // pines on the shores and lower slopes
     let placed = 0;
     for (let t = 0; t < 1400 && placed < 240; t++) {
       const ang = R() * Math.PI * 2, rr = 25 + R() * 40;
@@ -227,29 +284,78 @@ export class SceneController {
       this.pine(g, px, ph - 0.2, pz, 0.8 + R() * 0.9, R);
       placed++;
     }
-    // stone island under the board
-    g.frustum(0, 0, -4.5, 10.8, 0.2, 9.4, 11, COL.rock, COL.rock, 0.3);
-    g.frustum(0, 0, 0.2, 9.4, 1.0, 9.0, 11, COL.grass2, COL.grass2, 0.3);
-    const boulders = [[8.6, 2.0, 1.4], [-7.8, -4.4, 1.1], [3.4, -8.6, 1.0], [-5.6, 7.4, 1.3], [9.6, -5.0, 0.9]];
-    boulders.forEach((bd, k) => g.box(bd[0], 0.5, bd[1], bd[2] * 1.4, bd[2], bd[2] * 1.2, COL.rock2, k * 0.9));
-    this.pine(g, 7.6, 0.9, 5.8, 0.75, R);
-    this.pine(g, -7.9, 0.9, 4.2, 0.6, R);
-    this.pine(g, -6.2, 0.9, -6.6, 0.8, R);
-    this.pine(g, 6.4, 0.9, -6.9, 0.65, R);
-    // board frame + gold trim
+    return g;
+  }
+
+  /** The island: rock skirt, faceted meadow, boulders, pines, shrubs and flowers, the stone lanterns and the board frame. */
+  private buildIsland(g: Geo, glowG: Geo, R: Rng) {
+    g.frustum(0, 0, -4.5, 11.0, 0.3, 9.98, 28, COL.rock, COL.rock, 0.3);
+    // Meadow in jittered rings, so every facet catches the sun a little differently.
+    const NS = 28, rad = [4.2, 5.6, 7.0, 8.4, 9.4, 10.0], V: Vec3[][] = [];
+    rad.forEach((r0, k) => {
+      const row: Vec3[] = [], mid = k > 0 && k < 4;
+      for (let i = 0; i < NS; i++) {
+        const a = (i / NS) * TAU + 0.2 + (mid ? (R() - 0.5) * 0.08 : 0), r = r0 + (mid ? (R() - 0.5) * 0.5 : 0);
+        const y = k === 5 ? 0.28 : k === 4 ? 0.88 : 1.0 + (mid ? (R() - 0.5) * 0.12 : 0);
+        row.push([Math.cos(a) * r, y, Math.sin(a) * r]);
+      }
+      V.push(row);
+    });
+    const grassCol = (p: Vec3, q: Vec3, s: Vec3): RGB => {
+      const cx = (p[0] + q[0] + s[0]) / 3, cy = (p[1] + q[1] + s[1]) / 3, cz = (p[2] + q[2] + s[2]) / 3;
+      const c = shade(cy < 0.8 ? COL.shore : mix(COL.meadow, R() < 0.3 ? COL.meadow2 : COL.grass2, R() * 0.8), 0.95 + R() * 0.1);
+      // lantern light baked into the grass
+      const w = Math.min(1, LAMPS.reduce((n, [lx, lz]) => n + Math.exp(-((cx - lx) ** 2 + (cz - lz) ** 2) / 3.5), 0));
+      return [c[0] + 0.24 * w, c[1] + 0.07 * w, c[2] - 0.08 * w];
+    };
+    for (let k = 0; k < rad.length - 1; k++) {
+      for (let i = 0; i < NS; i++) {
+        const a = V[k][i], b = V[k][(i + 1) % NS], c = V[k + 1][(i + 1) % NS], d = V[k + 1][i];
+        g.tri(a, b, c, grassCol(a, b, c), 'up');
+        g.tri(a, c, d, grassCol(a, c, d), 'up');
+      }
+    }
+    // boulders along the shore, a few stones in the grass
+    const rock = (x: number, y: number, z: number, s: number) => {
+      const rot = R() * TAU, n = 5 + Math.floor(R() * 3), c = shade(R() < 0.5 ? COL.rock : COL.rock2, 0.92 + R() * 0.16);
+      g.frustum(x, z, y, s, y + s * 0.55, s * 0.84, n, c, c, rot);
+      g.frustum(x, z, y + s * 0.55, s * 0.84, y + s * 0.95, s * 0.42, n, shade(c, 1.08), shade(c, 1.16), rot);
+    };
+    for (let k = 0; k < 9; k++) {
+      const a = (k / 9) * TAU + R() * 0.45, r = 10.0 + R() * 0.8;
+      rock(Math.cos(a) * r, -0.5, Math.sin(a) * r, 0.7 + R() * 0.9);
+    }
+    for (const [x, z, s] of [[8.4, 1.6, 0.5], [-8.2, -1.2, 0.42], [1.4, -8.4, 0.36], [-1.0, 8.5, 0.46]]) rock(x, 0.9, z, s);
+    meadowPine(g, 7.4, 0.95, 4.6, 0.95, R);
+    meadowPine(g, -7.9, 0.95, 3.2, 0.8, R);
+    meadowPine(g, -3.4, 0.95, -8.0, 1.0, R);
+    meadowPine(g, 3.8, 0.95, -8.0, 0.75, R);
+    for (const [x, z, s] of [[8.2, -2.6, 0.9], [-8.4, -3.4, 0.8], [-6.0, 6.6, 1.0], [2.6, 8.4, 0.75], [6.6, 6.0, 0.6]]) bush(g, x, 0.95, z, s, R);
+    // wildflowers scattered through the meadow
+    const petals = [hexRgb('#fff4d6'), hexRgb('#ffd27a'), hexRgb('#ff9a8a'), hexRgb('#c9b6ff')];
+    for (let k = 0; k < 70; k++) {
+      const a = R() * TAU, r = 5.8 + R() * 3.4, x = Math.cos(a) * r, z = Math.sin(a) * r;
+      if (LAMPS.some(([lx, lz]) => Math.hypot(x - lx, z - lz) < 0.7)) continue;
+      g.frustum(x, z, 0.9, 0.025, 1.16, 0.02, 3, COL.grass);
+      g.frustum(x, z, 1.14, 0.1, 1.24, 0, 5, petals[Math.floor(R() * petals.length)], null, R() * TAU);
+    }
+    // stone lanterns: foot, pillar, shelf, the lit chamber (its own glowing mesh) and a roof
+    for (const [x, z] of LAMPS) {
+      g.frustum(x, z, 0.88, 0.46, 1.12, 0.38, 6, COL.rock2);
+      g.frustum(x, z, 1.12, 0.18, 1.66, 0.15, 6, COL.rock);
+      g.frustum(x, z, 1.66, 0.36, 1.76, 0.36, 6, COL.rock2);
+      glowG.frustum(x, z, 1.76, 0.27, 2.26, 0.27, 6, COL.lantern);
+      g.frustum(x, z, 2.26, 0.5, 2.4, 0.4, 6, COL.frame);
+      g.frustum(x, z, 2.4, 0.4, 2.72, 0, 6, COL.frame2);
+    }
+    // board: a stepped plinth, the frame, gold trim on its rim and gold posts at the corners
+    g.box(0, 1.02, 0, 8.3, 0.4, 8.3, COL.frame2);
     g.box(0, 1.3, 0, 7.6, 0.6, 7.6, COL.frame);
     g.box(0, 1.63, 3.74, 7.72, 0.08, 0.14, COL.trim);
     g.box(0, 1.63, -3.74, 7.72, 0.08, 0.14, COL.trim);
     g.box(3.74, 1.63, 0, 0.14, 0.08, 7.72, COL.trim);
     g.box(-3.74, 1.63, 0, 0.14, 0.08, 7.72, COL.trim);
-    // small stone lanterns at the board corners
-    for (const q of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
-      const x = q[0] * 4.7, z = q[1] * 4.7;
-      g.box(x, 1.3, z, 0.5, 0.6, 0.5, COL.rock2, 0.785);
-      g.box(x, 1.8, z, 0.36, 0.4, 0.36, COL.lantern, 0.785);
-      g.frustum(x, z, 2.0, 0.45, 2.35, 0.0, 4, COL.frame, null, 0);
-    }
-    return g;
+    for (const sx of [1, -1]) for (const sz of [1, -1]) g.frustum(sx * 3.74, sz * 3.74, 1.0, 0.24, 1.74, 0.2, 4, COL.trim, COL.trim, Math.PI / 4);
   }
 
   private pine(g: Geo, x: number, y: number, z: number, s: number, R: Rng) {
@@ -280,20 +386,26 @@ export class SceneController {
       }
     }
     if (next.line && (fresh || !prev!.line)) this.winAt = now + WIN_DELAY_MS;
+    this.shadowsUntil = now + SHADOW_MS; // pieces animate for a while after every change
     this.view = next;
   }
 
   // ---------------------------------------------------------------- input
 
+  /** Point the camera orbits. On landscape screens it sits below the board so the board clears the bottom HUD. */
+  private focus(): THREE.Vector3 {
+    return this.cam.target.clone().setY(this.cam.target.y - (this.camera.aspect < 0.8 ? 0 : LANDSCAPE_DROP));
+  }
+
   private eye(): THREE.Vector3 {
-    const c = this.cam, cp = Math.cos(c.pitch);
+    const c = this.cam, cp = Math.cos(c.pitch), f = this.focus();
     // On portrait screens the horizontal field of view is narrow: back off so the board still fits.
     const halfH = Math.tan(FOV / 2) * this.camera.aspect;
     const dist = c.dist * Math.max(1, BOARD_FIT / halfH / DEFAULT_DIST);
     return new THREE.Vector3(
-      c.target.x + dist * cp * Math.sin(c.yaw),
-      c.target.y + dist * Math.sin(c.pitch),
-      c.target.z + dist * cp * Math.cos(c.yaw),
+      f.x + dist * cp * Math.sin(c.yaw),
+      f.y + dist * Math.sin(c.pitch),
+      f.z + dist * cp * Math.cos(c.yaw),
     );
   }
 
@@ -378,7 +490,7 @@ export class SceneController {
 
   private resize() {
     const c = this.canvas;
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75) * this.budget.scale);
     this.renderer.setSize(Math.max(1, c.clientWidth), Math.max(1, c.clientHeight), false);
     this.camera.aspect = Math.max(1, c.clientWidth) / Math.max(1, c.clientHeight);
     this.camera.updateProjectionMatrix();
@@ -387,11 +499,14 @@ export class SceneController {
   private frame() {
     const now = performance.now(), t = (now - this.clock0) / 1000;
     const dt = Math.min(0.05, (now - (this.lastT || now)) / 1000);
+    if (this.budget.tick((now - (this.lastT || now)) / 1000, now)) this.resize(); // slow frames: lower the resolution
     this.lastT = now;
     if (this.autoRotate && !this.dragging && now - this.lastInteract > IDLE_ROTATE_MS) this.cam.yaw += dt * 0.045;
 
     this.camera.position.copy(this.eye());
-    this.camera.lookAt(this.cam.target);
+    this.camera.lookAt(this.focus());
+    // the stone lanterns flicker like candle flames
+    this.glow(this.lampGlow, COL.lantern, 0.84 + 0.08 * Math.sin(t * 7) * Math.sin(t * 3.1));
     this.sky.position.copy(this.camera.position);
     this.sky.material.uniforms.uTime.value = t;
     this.water.material.uniforms.uTime.value = t;
@@ -406,7 +521,7 @@ export class SceneController {
       const m = this.cells[i].material;
       if (winning(i)) this.glow(m, COL.cell, 0.15 + 0.1 * Math.sin(t * 6), [1.05, 0.96, 0.78]);
       else if (v && i === this.hover && this.canHover() && !v.board[i]) this.glow(m, COL.cell, 0, [0.7 + tc[0] * 0.35, 0.7 + tc[1] * 0.35, 0.7 + tc[2] * 0.35]);
-      else this.glow(m, COL.cell, 0);
+      else this.glow(m, COL.cell, 0, i % 2 ? [0.93, 0.93, 0.93] : [1, 1, 1]); // faint checker
 
       for (const p of ['X', 'O'] as const) this.animatePiece(p, i, now, t, winning(i));
     }
@@ -437,6 +552,7 @@ export class SceneController {
     });
     this.lanterns.instanceMatrix.needsUpdate = true;
 
+    this.renderer.shadowMap.needsUpdate = performance.now() < this.shadowsUntil || !!this.view?.line;
     this.renderer.render(this.scene, this.camera);
   }
 
@@ -490,6 +606,7 @@ export class SceneController {
     });
     geos.forEach((g) => g.dispose());
     mats.forEach((m) => m.dispose());
+    this.env.dispose();
     this.renderer.dispose();
     // A detached canvas will never be reused, so free its context now. Strict Mode re-runs effects on a
     // canvas that is still connected, and losing the context there would leave the scene blank.

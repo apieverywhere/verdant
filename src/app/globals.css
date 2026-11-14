@@ -683,3 +683,121 @@ html, body {
 @media (max-width: 640px) {
   .lobby .about h2 { font-size: 26px; }
 }
+
+/* Scene loader: Tano, the lobby's whale guardian, loses his temper while the 3D scene loads, blows up and is left
+   covered in soot (components/SceneLoader.tsx). Only transform and opacity are animated, so it keeps running on
+   the compositor while the main thread builds the scene. */
+.loader {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: radial-gradient(120% 90% at 50% 40%, #1a4a63 0%, var(--bg) 70%);
+  transition: opacity 0.5s ease, visibility 0s linear 0.5s;
+}
+.loader[data-done="true"] { opacity: 0; visibility: hidden; pointer-events: none; }
+.tano { position: relative; width: 168px; aspect-ratio: 560 / 703; }
+.tano > img, .tano-brows, .tano-eyes { position: absolute; inset: 0; width: 100%; height: 100%; }
+/* Two tinted copies of the same picture fade in over the original: flushed with rage, then charred. */
+.tano-red { filter: sepia(1) saturate(7) hue-rotate(-38deg) brightness(0.95); opacity: 0; }
+.tano-soot { filter: brightness(0.2) saturate(0.35); opacity: 0; }
+.tano-brows, .tano-eyes { opacity: 0; }
+.tano-vein { position: absolute; left: 2%; top: 14%; width: 20%; opacity: 0; }
+.tano-steam, .tano-smoke { position: absolute; border-radius: 50%; opacity: 0; }
+.tano-steam { width: 12%; aspect-ratio: 1; background: #f4fbff; top: 22%; }
+.tano-steam-l { left: 12%; }
+.tano-steam-r { left: 70%; }
+.tano-smoke { width: 16%; aspect-ratio: 1; background: #7d8790; top: 12%; left: 40%; }
+.tano-boom { position: absolute; left: -20%; top: 2%; width: 140%; opacity: 0; }
+.loader-text { margin: 0; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-soft); }
+.loader-text span { display: inline-block; }
+@media (prefers-reduced-motion: no-preference) {
+  .tano { animation: tano-shake 4.2s linear infinite; }
+  .tano-red { animation: tano-red 4.2s linear infinite; }
+  .tano-soot, .tano-eyes { animation: tano-soot 4.2s linear infinite; }
+  .tano-brows { animation: tano-brows 4.2s linear infinite; }
+  .tano-vein { animation: tano-vein 4.2s ease-in-out infinite; }
+  .tano-steam { animation: tano-steam 4.2s ease-out infinite; }
+  .tano-steam-r { animation-delay: 0.35s; }
+  .tano-boom { animation: tano-boom 4.2s ease-out infinite; }
+  .tano-smoke { animation: tano-smoke 4.2s ease-out infinite; }
+  .tano-smoke-b { --sx: -16px; animation-delay: 0.3s; }
+  .tano-smoke-c { --sx: 14px; animation-delay: 0.6s; }
+  .loader-text span { animation: loader-dot 1.2s ease-in-out infinite; }
+  .loader-text span:nth-child(2) { animation-delay: 0.15s; }
+  .loader-text span:nth-child(3) { animation-delay: 0.3s; }
+}
+/* 0–8% calm · 8–48% the temper builds · 48–54% boom · 54–88% charred and dazed · 88–100% back to himself */
+@keyframes tano-shake {
+  0%, 8% { transform: none; }
+  10% { transform: translateX(-0.6px) rotate(-0.15deg); }
+  12% { transform: translateX(0.9px) rotate(0.23deg); }
+  14% { transform: translateX(-1.2px) rotate(-0.30deg); }
+  16% { transform: translateX(1.5px) rotate(0.38deg); }
+  18% { transform: translateX(-1.8px) rotate(-0.45deg); }
+  20% { transform: translateX(2.1px) rotate(0.53deg); }
+  22% { transform: translateX(-2.4px) rotate(-0.60deg); }
+  24% { transform: translateX(2.7px) rotate(0.68deg); }
+  26% { transform: translateX(-3.0px) rotate(-0.75deg); }
+  28% { transform: translateX(3.3px) rotate(0.83deg); }
+  30% { transform: translateX(-3.6px) rotate(-0.90deg); }
+  32% { transform: translateX(3.9px) rotate(0.98deg); }
+  34% { transform: translateX(-4.2px) rotate(-1.05deg); }
+  36% { transform: translateX(4.5px) rotate(1.12deg); }
+  38% { transform: translateX(-4.8px) rotate(-1.20deg); }
+  40% { transform: translateX(5.1px) rotate(1.27deg); }
+  42% { transform: translateX(-5.4px) rotate(-1.35deg); }
+  44% { transform: translateX(5.7px) rotate(1.43deg); }
+  46% { transform: translateX(-6.0px) rotate(-1.50deg); }
+  48% { transform: scale(0.9, 1.08); }
+  51% { transform: scale(1.18, 0.9); }
+  56% { transform: scale(0.97, 1.03); }
+  60%, 100% { transform: none; }
+}
+@keyframes tano-red {
+  0%, 8% { opacity: 0; }
+  46% { opacity: 0.85; }
+  50% { opacity: 0.85; }
+  52%, 100% { opacity: 0; }
+}
+@keyframes tano-soot {
+  0%, 49% { opacity: 0; }
+  51%, 86% { opacity: 1; }
+  98%, 100% { opacity: 0; }
+}
+@keyframes tano-brows {
+  0%, 9% { opacity: 0; }
+  13%, 86% { opacity: 1; }
+  96%, 100% { opacity: 0; }
+}
+@keyframes tano-vein {
+  0%, 16% { opacity: 0; transform: scale(0.3); }
+  20% { opacity: 1; transform: scale(1.2); }
+  26% { transform: scale(0.9); }
+  32% { transform: scale(1.25); }
+  38% { transform: scale(0.95); }
+  46% { opacity: 1; transform: scale(1.4); }
+  50%, 100% { opacity: 0; transform: scale(1.4); }
+}
+@keyframes tano-steam {
+  0%, 24% { opacity: 0; transform: translateY(0) scale(0.5); }
+  28% { opacity: 0.9; }
+  44%, 100% { opacity: 0; transform: translateY(-46px) scale(1.5); }
+}
+@keyframes tano-boom {
+  0%, 47% { opacity: 0; transform: scale(0.2) rotate(0deg); }
+  49% { opacity: 1; }
+  57%, 100% { opacity: 0; transform: scale(1.25) rotate(25deg); }
+}
+@keyframes tano-smoke {
+  0%, 53% { opacity: 0; transform: translate(0, 0) scale(0.6); }
+  57% { opacity: 0.85; }
+  80%, 100% { opacity: 0; transform: translate(var(--sx, 0px), -70px) scale(2); }
+}
+@keyframes loader-dot {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+  30% { transform: translateY(-4px); opacity: 1; }
+}

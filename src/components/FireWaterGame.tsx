@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { chooseColumn } from '@/lib/fire-water/ai';
 import type { AiReply } from '@/lib/fire-water/ai.worker';
@@ -8,7 +9,7 @@ import { COLUMNS, SIZE, dropCell, stackHeight } from '@/lib/fire-water/rules';
 import type { Mode, Player } from '@/lib/game/types';
 import { rememberGame } from '@/lib/recentGame';
 import type { FireWaterView } from '@/lib/scene/FireWaterController';
-import FireWaterScene from './FireWaterScene';
+import SceneLoader from './SceneLoader';
 import { FIRE_WATER_HELP } from './helpCards';
 import HowToPlay from './HowToPlay';
 import { DifficultyPicker, Divider, NoWebGL, Score, Scoreboard, StatusPill, TitleCard, Toolbar } from './Hud';
@@ -17,9 +18,14 @@ const AI_DELAY_MS = 650;
 const COLORS = { X: '#ff7a4d', O: '#5ab0ff', D: '#c3d6e3' };
 const NAME: Record<Player, string> = { X: 'Fire', O: 'Water' };
 
+// three.js and the scene load after the page shell; the dolphin loader covers the wait.
+const FireWaterScene = dynamic(() => import('./FireWaterScene'), { ssr: false });
+
 export default function FireWaterGame() {
-  const [match, dispatch] = useReducer(matchReducer, undefined, () => initialMatch());
+  const [match, dispatch] = useReducer(matchReducer, undefined, () => initialMatch('ai', 'easy')); // opens against the computer, on Easy
   const [noGL, setNoGL] = useState(false);
+  const [ready, setReady] = useState(false);
+  const onReady = useCallback(() => setReady(true), []);
   const requestId = useRef(0);
   const { game, mode, difficulty, scores } = match;
   const ai = mode === 'ai';
@@ -113,7 +119,8 @@ export default function FireWaterGame() {
 
   return (
     <main className="stage moon">
-      <FireWaterScene view={view} onPick={play} onUnsupported={onUnsupported} />
+      <FireWaterScene view={view} onPick={play} onUnsupported={onUnsupported} onReady={onReady} />
+      <SceneLoader done={ready || noGL} />
 
       <div className="hud">
         <div className="hud-top">

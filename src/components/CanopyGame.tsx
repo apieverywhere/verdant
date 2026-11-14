@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { chooseTurn } from '@/lib/canopy/ai';
 import type { AiReply } from '@/lib/canopy/ai.worker';
@@ -9,7 +10,7 @@ import type { Turn } from '@/lib/canopy/search';
 import type { Mode, Player } from '@/lib/game/types';
 import { rememberGame } from '@/lib/recentGame';
 import type { CanopyView } from '@/lib/scene/CanopyController';
-import CanopyScene from './CanopyScene';
+import SceneLoader from './SceneLoader';
 import { CANOPY_HELP } from './helpCards';
 import HowToPlay from './HowToPlay';
 import { DifficultyPicker, Divider, NoWebGL, Score, Scoreboard, StatusPill, TitleCard, Toolbar } from './Hud';
@@ -20,9 +21,14 @@ const AI_PART_DELAY_MS = 600;
 const COLORS: Record<Player, string> = { X: '#ffb347', O: '#a99cff' };
 const NAME: Record<Player, string> = { X: 'Amber', O: 'Violet' };
 
+// three.js and the scene load after the page shell; the dolphin loader covers the wait.
+const CanopyScene = dynamic(() => import('./CanopyScene'), { ssr: false });
+
 export default function CanopyGame() {
-  const [match, dispatch] = useReducer(matchReducer, undefined, () => initialMatch());
+  const [match, dispatch] = useReducer(matchReducer, undefined, () => initialMatch('ai', 'easy')); // opens against the computer, on Easy
   const [noGL, setNoGL] = useState(false);
+  const [ready, setReady] = useState(false);
+  const onReady = useCallback(() => setReady(true), []);
   const { game, mode, difficulty, wins } = match;
   const requestId = useRef(0);
   /** The grow and cut the computer planned together with its step. */
@@ -179,7 +185,8 @@ export default function CanopyGame() {
 
   return (
     <main className="stage forest">
-      <CanopyScene view={view} onPick={onPick} onUnsupported={onUnsupported} />
+      <CanopyScene view={view} onPick={onPick} onUnsupported={onUnsupported} onReady={onReady} />
+      <SceneLoader done={ready || noGL} />
 
       <div className="hud">
         <div className="hud-top">

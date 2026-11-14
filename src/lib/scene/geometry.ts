@@ -14,6 +14,9 @@ export function hexRgb(h: string): RGB {
   return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
 }
 
+export const mix = (a: RGB, b: RGB, k: number): RGB => [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k];
+export const shade = (c: RGB, k: number): RGB => [c[0] * k, c[1] * k, c[2] * k];
+
 export class Geo {
   private pos: number[] = [];
   private nor: number[] = [];

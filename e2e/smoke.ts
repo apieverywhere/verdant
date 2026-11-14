@@ -96,6 +96,8 @@ try {
   await page.goto(`${URL}/lantern-line`, { waitUntil: 'networkidle' });
   await page.waitForFunction(() => !!(window as any).__caroScene, null, { timeout: 15000 });
   await page.waitForTimeout(800);
+  check('lantern-line opens against the computer', (await page.getByRole('button', { name: 'vs Computer' }).getAttribute('aria-pressed')) === 'true');
+  await page.getByRole('button', { name: '2 players' }).click(); // games open against the computer
   await page.screenshot({ path: `${SHOTS}/1-start.png` });
 
   check('page title', (await page.title()).includes('Lantern Line'));
@@ -140,6 +142,7 @@ try {
   await page.getByRole('button', { name: 'vs Computer' }).click();
   check('mode switch resets scores', (await page.getByTestId('score-x').innerText()) === '0');
   check('difficulty selector visible', await page.getByRole('button', { name: 'Hard' }).isVisible());
+  check('lantern-line: Easy is the default', (await page.getByRole('button', { name: 'Easy' }).getAttribute('aria-pressed')) === 'true');
   await clickCell(page, 4);
   check('AI thinking status', (await status(page)).includes('Computer is thinking'), await status(page));
   await page.waitForFunction(() => document.querySelector('[data-testid=status]')!.textContent!.includes('Your turn'), null, { timeout: 5000 });
@@ -154,6 +157,7 @@ try {
   await page.waitForTimeout(900);
 
   // Let the hard AI play out against random clicks: it must never lose.
+  await page.getByRole('button', { name: 'Hard' }).click();
   await page.getByRole('button', { name: 'Reset score' }).click();
   let hintChecks = 0, hintMissing = 0;
   for (let turn = 0; turn < 60; turn++) {
@@ -257,6 +261,7 @@ try {
   await page.waitForURL('**/ember-and-tide');
   await page.waitForFunction(() => !!(window as any).__fireWaterScene, null, { timeout: 15000 });
   await page.waitForTimeout(800);
+  await page.getByRole('button', { name: '2 players' }).click(); // games open against the computer
   check('ember & tide title', (await page.title()).includes('Ember & Tide'));
   check('ember & tide: Fire starts', (await status(page)).includes('Fire’s turn'), await status(page));
   await checkHelp(page, 'ember-and-tide', 7);
@@ -287,7 +292,7 @@ try {
 
   await page.getByRole('button', { name: 'vs Computer' }).click();
   for (const label of ['Easy', 'Medium', 'Hard']) check(`ember & tide: difficulty ${label} visible`, await page.getByRole('button', { name: label }).isVisible());
-  check('ember & tide: Hard is the default', (await page.getByRole('button', { name: 'Hard' }).getAttribute('aria-pressed')) === 'true');
+  check('ember & tide: Easy is the default', (await page.getByRole('button', { name: 'Easy' }).getAttribute('aria-pressed')) === 'true');
   await page.getByRole('button', { name: 'Medium' }).click();
   check('ember & tide: difficulty can be changed', (await page.getByRole('button', { name: 'Medium' }).getAttribute('aria-pressed')) === 'true');
   await page.screenshot({ path: `${SHOTS}/12-fire-water-difficulty.png` });
@@ -323,6 +328,7 @@ try {
   await page.goto(`${URL}/canopy`, { waitUntil: 'networkidle' });
   await page.waitForFunction(() => !!(window as any).__canopyScene, null, { timeout: 15000 });
   await page.waitForTimeout(800);
+  await page.getByRole('button', { name: '2 players' }).click(); // games open against the computer
   const tile = (col: number, row: number) => row * 5 + col;
   const levels = () => page.evaluate(() => (window as any).__canopyScene.view.level as number[]);
   check('canopy title', (await page.title()).includes('Canopy'));
@@ -366,7 +372,7 @@ try {
   await page.waitForTimeout(700);
   await page.screenshot({ path: `${SHOTS}/13-canopy.png` });
   await page.getByRole('button', { name: 'vs Computer' }).click();
-  check('canopy: Hard is the default', (await page.getByRole('button', { name: 'Hard' }).getAttribute('aria-pressed')) === 'true');
+  check('canopy: Easy is the default', (await page.getByRole('button', { name: 'Easy' }).getAttribute('aria-pressed')) === 'true');
   await clickTile(page, tile(3, 4));
   await clickTile(page, tile(3, 3));
   await clickTile(page, tile(3, 2));

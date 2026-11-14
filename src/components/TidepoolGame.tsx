@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import type { Mode, Player } from '@/lib/game/types';
 import { rememberGame } from '@/lib/recentGame';
@@ -11,15 +12,20 @@ import { cellName, DIR_NAMES, lineOf, movesForGroup, other, WIN_PUSHES, type Mov
 import { TIDEPOOL_HELP } from './helpCards';
 import HowToPlay from './HowToPlay';
 import { DifficultyPicker, Divider, NoWebGL, Score, Scoreboard, StatusPill, TitleCard, Toolbar } from './Hud';
-import TidepoolScene from './TidepoolScene';
+import SceneLoader from './SceneLoader';
 
 const AI_DELAY_MS = 650;
 const COLORS: Record<Player, string> = { X: '#f1ece2', O: '#ff7a6b' };
 const NAME: Record<Player, string> = { X: 'Pearl', O: 'Coral' };
 
+// three.js and the scene load after the page shell; the dolphin loader covers the wait.
+const TidepoolScene = dynamic(() => import('./TidepoolScene'), { ssr: false });
+
 export default function TidepoolGame() {
-  const [match, dispatch] = useReducer(matchReducer, undefined, () => initialMatch());
+  const [match, dispatch] = useReducer(matchReducer, undefined, () => initialMatch('ai', 'easy')); // opens against the computer, on Easy
   const [noGL, setNoGL] = useState(false);
+  const [ready, setReady] = useState(false);
+  const onReady = useCallback(() => setReady(true), []);
   const { game, mode, difficulty, wins, sel } = match;
   const requestId = useRef(0);
   const ai = mode === 'ai';
@@ -136,7 +142,8 @@ export default function TidepoolGame() {
 
   return (
     <main className="stage lagoon">
-      <TidepoolScene view={view} onPick={onPick} onUnsupported={onUnsupported} />
+      <TidepoolScene view={view} onPick={onPick} onUnsupported={onUnsupported} onReady={onReady} />
+      <SceneLoader done={ready || noGL} />
 
       <div className="hud">
         <div className="hud-top">

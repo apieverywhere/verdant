@@ -7,19 +7,23 @@ interface Props {
   view: TidepoolView;
   onPick: (hit: TidepoolPick) => void;
   onUnsupported: () => void;
+  /** Called once the scene is built and has drawn its first frame. */
+  onReady?: () => void;
 }
 
 const LABEL =
-  'A hexagonal Tidepool board on a stone platform in a lagoon at dusk, with Pearl and Coral marbles. Drag to rotate, scroll to zoom, click marbles to select them and click a gold marker to move.';
+  'A hexagonal honeycomb Tidepool board on a sand island in a lagoon at dusk, with Pearl and Coral marbles and a tray for the ones pushed off. Drag to rotate, scroll to zoom, click marbles to select them and click a gold marker to move.';
 
 /** Mounts the three.js scene on a canvas; the scene lives outside React's render cycle. */
-export default function TidepoolScene({ view, onPick, onUnsupported }: Props) {
+export default function TidepoolScene({ view, onPick, onUnsupported, onReady }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const ctrlRef = useRef<TidepoolController | null>(null);
   const pickRef = useRef(onPick);
   const viewRef = useRef(view);
   pickRef.current = onPick;
   viewRef.current = view;
+  const readyRef = useRef(onReady);
+  readyRef.current = onReady;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -34,6 +38,7 @@ export default function TidepoolScene({ view, onPick, onUnsupported }: Props) {
     }
     ctrl.setView(viewRef.current);
     ctrlRef.current = ctrl;
+    readyRef.current?.();
     // Exposed for end-to-end tests (projecting holes and markers to screen coordinates).
     (window as unknown as { __tidepoolScene?: TidepoolController }).__tidepoolScene = ctrl;
     return () => {

@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import { chooseMove } from '@/lib/game/ai';
 import { initialMatch, isAiTurn, matchReducer } from '@/lib/game/match';
@@ -7,7 +8,7 @@ import { vanishingCell } from '@/lib/game/rules';
 import type { Mode } from '@/lib/game/types';
 import { rememberGame } from '@/lib/recentGame';
 import type { SceneView } from '@/lib/scene/SceneController';
-import BoardScene from './BoardScene';
+import SceneLoader from './SceneLoader';
 import { TIC_TAC_TOE_HELP } from './helpCards';
 import HowToPlay from './HowToPlay';
 import { DifficultyPicker, Divider, NoWebGL, Score, Scoreboard, StatusPill, TitleCard, Toolbar } from './Hud';
@@ -17,9 +18,14 @@ const COLORS = { X: '#ff7a6b', O: '#4fd8cc', D: '#c3d6e3' };
 
 const cellName = (i: number) => `row ${Math.floor(i / 3) + 1}, column ${(i % 3) + 1}`;
 
+// three.js and the scene load after the page shell; the dolphin loader covers the wait.
+const BoardScene = dynamic(() => import('./BoardScene'), { ssr: false });
+
 export default function Game() {
-  const [match, dispatch] = useReducer(matchReducer, undefined, () => initialMatch());
+  const [match, dispatch] = useReducer(matchReducer, undefined, () => initialMatch('ai', 'easy')); // opens against the computer, on Easy
   const [noGL, setNoGL] = useState(false);
+  const [ready, setReady] = useState(false);
+  const onReady = useCallback(() => setReady(true), []);
   const { game, mode, difficulty, scores } = match;
   const ai = mode === 'ai';
   const aiTurn = isAiTurn(match);
@@ -75,7 +81,8 @@ export default function Game() {
 
   return (
     <main className="stage">
-      <BoardScene view={view} onPick={play} onUnsupported={onUnsupported} />
+      <BoardScene view={view} onPick={play} onUnsupported={onUnsupported} onReady={onReady} />
+      <SceneLoader done={ready || noGL} />
 
       <div className="hud">
         <div className="hud-top">
