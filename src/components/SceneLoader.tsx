@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import tano from '@/assets/tano.png';
+import { useT } from '@/lib/i18n';
 
 /**
  * Shown over the stage while the three.js scene downloads and builds. Tano, the lobby's whale guardian, hates
@@ -8,6 +9,7 @@ import tano from '@/assets/tano.png';
  * only (see globals.css), so it keeps running while the main thread is busy. Fades out once `done` is set.
  */
 export default function SceneLoader({ done }: { done: boolean }) {
+  const t = useT();
   const picture = { src: tano, alt: '', sizes: '168px', loading: 'eager' } as const;
   return (
     <div className="loader" data-done={done} role="status" aria-hidden={done}>
@@ -59,7 +61,7 @@ export default function SceneLoader({ done }: { done: boolean }) {
         <i className="tano-smoke tano-smoke-b" />
         <i className="tano-smoke tano-smoke-c" />
       </div>
-      <p className="loader-text">Loading<span>.</span><span>.</span><span>.</span></p>
+      <p className="loader-text">{t.loading}<span>.</span><span>.</span><span>.</span></p>
     </div>
   );
 }

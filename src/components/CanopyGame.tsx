@@ -5,26 +5,31 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'r
 import { chooseTurn } from '@/lib/canopy/ai';
 import type { AiReply } from '@/lib/canopy/ai.worker';
 import { initialMatch, isAiTurn, matchReducer } from '@/lib/canopy/match';
-import { cellName, climbersOf, cutTargets, growTargets, lanternCount, other, ownerOf, STAGE_NAMES, stepTargets, TREETOP, WIN_LANTERNS } from '@/lib/canopy/rules';
+import { climbersOf, colOf, cutTargets, growTargets, lanternCount, other, ownerOf, rowOf, stepTargets, TREETOP, WIN_LANTERNS } from '@/lib/canopy/rules';
 import type { Turn } from '@/lib/canopy/search';
 import type { Mode, Player } from '@/lib/game/types';
+import { useT } from '@/lib/i18n';
 import { rememberGame } from '@/lib/recentGame';
 import type { CanopyView } from '@/lib/scene/CanopyController';
 import SceneLoader from './SceneLoader';
 import { CANOPY_HELP } from './helpCards';
 import HowToPlay from './HowToPlay';
-import { DifficultyPicker, Divider, NoWebGL, Score, Scoreboard, StatusPill, TitleCard, Toolbar } from './Hud';
+import { DifficultyPicker, Divider, HudButtons, NoWebGL, Score, Scoreboard, StatusPill, TitleCard, Toolbar } from './Hud';
 
 /** Shortest "thinking" pause before the computer steps, and the pause before each later part of its turn. */
 const AI_DELAY_MS = 650;
 const AI_PART_DELAY_MS = 600;
 const COLORS: Record<Player, string> = { X: '#ffb347', O: '#a99cff' };
-const NAME: Record<Player, string> = { X: 'Amber', O: 'Violet' };
 
 // three.js and the scene load after the page shell; the dolphin loader covers the wait.
 const CanopyScene = dynamic(() => import('./CanopyScene'), { ssr: false });
 
 export default function CanopyGame() {
+  const t = useT();
+  const tc = t.cn;
+  const NAME = tc.names;
+  const STAGE_NAMES = tc.stages;
+  const cellName = (cell: number) => tc.cell(rowOf(cell) + 1, colOf(cell) + 1);
   const [match, dispatch] = useReducer(matchReducer, undefined, () => initialMatch('ai', 'easy')); // opens against the computer, on Easy
   const [noGL, setNoGL] = useState(false);
   const [ready, setReady] = useState(false);
@@ -163,24 +168,24 @@ export default function CanopyGame() {
 
   let status: string;
   if (game.winner) {
-    const who = ai ? (game.winner === 'X' ? 'You (Amber) win!' : 'The computer (Violet) wins!') : `${NAME[game.winner]} wins!`;
-    status = game.reason === 'stuck' ? `${who} ${NAME[other(game.winner)]} has no move left` : `${who} Two treetops lit`;
-  } else if (aiTurn) status = 'Computer (Violet) is thinking…';
-  else if (game.phase === 'grow') status = `${NAME[game.turn]}: now grow a tile · click a green sprout`;
-  else if (game.phase === 'cut') status = `${NAME[game.turn]}: cut a tree back one stage, or skip`;
-  else if (sel >= 0) status = `${NAME[game.turn]}: click a gold marker to move`;
-  else status = `${ai ? 'Your turn (Amber)' : `${NAME[game.turn]}’s turn`} · pick a climber`;
+    const who = ai ? (game.winner === 'X' ? tc.youWin : tc.computerWins) : tc.sideWins(NAME[game.winner]);
+    status = `${who} ${game.reason === 'stuck' ? tc.stuck(NAME[other(game.winner)]) : tc.twoLit}`;
+  } else if (aiTurn) status = tc.thinking;
+  else if (game.phase === 'grow') status = tc.grow(NAME[game.turn]);
+  else if (game.phase === 'cut') status = tc.cut(NAME[game.turn]);
+  else if (sel >= 0) status = tc.moveTo(NAME[game.turn]);
+  else status = `${ai ? tc.yourTurn : tc.sideTurn(NAME[game.turn])} · ${tc.pickClimber}`;
   const statusColor = COLORS[game.winner ?? game.turn];
 
   const targetLabel = (cell: number) => {
     const stage = game.level[cell];
-    if (game.phase === 'grow') return `Grow ${cellName(cell)}: ${STAGE_NAMES[stage]} to ${STAGE_NAMES[stage + 1]}`;
+    if (game.phase === 'grow') return tc.growLabel(cellName(cell), STAGE_NAMES[stage], STAGE_NAMES[stage + 1]);
     if (game.phase === 'cut') {
-      const lantern = stage === TREETOP && game.lantern[cell] ? `, putting out ${NAME[game.lantern[cell]!]}’s lantern` : '';
-      return `Cut ${cellName(cell)}: ${STAGE_NAMES[stage]} back to ${STAGE_NAMES[stage - 1]}${lantern}`;
+      const lantern = stage === TREETOP && game.lantern[cell] ? tc.putOut(NAME[game.lantern[cell]!]) : '';
+      return tc.cutLabel(cellName(cell), STAGE_NAMES[stage], STAGE_NAMES[stage - 1], lantern);
     }
-    const lantern = stage === TREETOP && game.lantern[cell] !== game.turn ? (game.lantern[cell] ? ', taking the lantern' : ', lighting a lantern') : '';
-    return `Step to ${cellName(cell)} (${STAGE_NAMES[stage]})${lantern}`;
+    const lantern = stage === TREETOP && game.lantern[cell] !== game.turn ? (game.lantern[cell] ? tc.takeLantern : tc.lightLantern) : '';
+    return tc.stepLabel(cellName(cell), STAGE_NAMES[stage], lantern);
   };
 
   return (
@@ -190,26 +195,28 @@ export default function CanopyGame() {
 
       <div className="hud">
         <div className="hud-top">
-          <TitleCard title="Canopy" subtitle="Climb, grow, and light lanterns on 2 treetops to win" />
+          <TitleCard title="Canopy" subtitle={tc.subtitle} />
           <div className="hud-top-right">
             <Scoreboard>
               <Score
                 icon={<ClimberIcon body="#ffb347" head="#ffe0a8" />}
                 value={<>{lanternCount(game, 'X')}<small>/{WIN_LANTERNS}</small></>}
-                label={ai ? 'You · Amber' : 'Amber'}
-                sub={`Wins ${wins.X}`}
+                label={ai ? `${t.you} · ${NAME.X}` : NAME.X}
+                sub={t.wins(wins.X)}
                 testId="score-x"
               />
               <Divider />
               <Score
                 icon={<ClimberIcon body="#8a7cf5" head="#d2cbff" />}
                 value={<>{lanternCount(game, 'O')}<small>/{WIN_LANTERNS}</small></>}
-                label={ai ? 'CPU · Violet' : 'Violet'}
-                sub={`Wins ${wins.O}`}
+                label={ai ? `${t.cpu} · ${NAME.O}` : NAME.O}
+                sub={t.wins(wins.O)}
                 testId="score-o"
               />
             </Scoreboard>
-            <HowToPlay subtitle="Canopy · Amber vs Violet · light 2 treetops to win" cards={CANOPY_HELP} />
+            <HudButtons>
+              <HowToPlay subtitle={tc.helpSubtitle} cards={CANOPY_HELP} />
+            </HudButtons>
           </div>
         </div>
 
@@ -219,7 +226,7 @@ export default function CanopyGame() {
           <StatusPill color={statusColor} status={status} />
           {interactive && game.phase === 'cut' && (
             <button type="button" className="cbtn skip-cut" onClick={skipCut}>
-              Skip cutting
+              {tc.skipCut}
             </button>
           )}
           <Toolbar
@@ -230,13 +237,13 @@ export default function CanopyGame() {
           >
             {ai && <DifficultyPicker value={difficulty} onChange={(d) => dispatch({ type: 'setDifficulty', difficulty: d })} />}
           </Toolbar>
-          <p className="help">Click a climber · Gold marker = move · Green sprout = grow · Coral arrow = cut back · Drag to rotate · Scroll to zoom</p>
+          <p className="help">{tc.controls}</p>
         </div>
       </div>
 
       {/* Keyboard / screen-reader controls; visually hidden until focused. */}
-      <div className="a11y-board a11y-list" role="group" aria-label="Climbers (keyboard)">
-        <div role="group" aria-label={`${NAME[game.turn]} climbers`}>
+      <div className="a11y-board a11y-list" role="group" aria-label={tc.climbersKeyboard}>
+        <div role="group" aria-label={tc.climbersGroup(NAME[game.turn])}>
           {climbersOf(game.turn).map((k) => (
             <button
               key={k}
@@ -246,12 +253,12 @@ export default function CanopyGame() {
               disabled={!interactive || game.phase !== 'move'}
               onClick={() => dispatch({ type: 'select', climber: k })}
             >
-              {`${NAME[ownerOf(k)]} climber on ${cellName(game.climbers[k])} (${STAGE_NAMES[game.level[game.climbers[k]]]})`}
+              {tc.climberOn(NAME[ownerOf(k)], cellName(game.climbers[k]), STAGE_NAMES[game.level[game.climbers[k]]])}
             </button>
           ))}
         </div>
         {targets.length > 0 && (
-          <div role="group" aria-label={game.phase === 'grow' ? 'Tiles to grow' : game.phase === 'cut' ? 'Tiles to cut back' : 'Tiles to step onto'}>
+          <div role="group" aria-label={game.phase === 'grow' ? tc.tilesGrow : game.phase === 'cut' ? tc.tilesCut : tc.tilesStep}>
             {targets.map((cell) => (
               <button key={cell} type="button" data-target={cell} onClick={() => act(cell)}>
                 {targetLabel(cell)}

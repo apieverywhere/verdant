@@ -267,8 +267,14 @@ export function applyMove(s: TidepoolState, mv: Move): TidepoolState {
   };
 }
 
-/** Human-readable cell name for the keyboard controls: row 1 is the far (Coral) side. */
+/** A cell's 1-based row (row 1 is the far, Coral side) and hole within that row. */
+export function cellPos(i: number): { row: number; hole: number } {
+  const c = CELLS[i], first = Math.max(-RADIUS, -RADIUS - c.r);
+  return { row: c.r + RADIUS + 1, hole: c.q - first + 1 };
+}
+
+/** Human-readable cell name for the keyboard controls. */
 export function cellName(i: number): string {
-  const c = CELLS[i], row = c.r + RADIUS + 1, first = Math.max(-RADIUS, -RADIUS - c.r);
-  return `row ${row}, hole ${c.q - first + 1}`;
+  const { row, hole } = cellPos(i);
+  return `row ${row}, hole ${hole}`;
 }

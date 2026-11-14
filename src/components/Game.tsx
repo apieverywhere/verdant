@@ -6,22 +6,24 @@ import { chooseMove } from '@/lib/game/ai';
 import { initialMatch, isAiTurn, matchReducer } from '@/lib/game/match';
 import { vanishingCell } from '@/lib/game/rules';
 import type { Mode } from '@/lib/game/types';
+import { useT } from '@/lib/i18n';
 import { rememberGame } from '@/lib/recentGame';
 import type { SceneView } from '@/lib/scene/SceneController';
 import SceneLoader from './SceneLoader';
 import { TIC_TAC_TOE_HELP } from './helpCards';
 import HowToPlay from './HowToPlay';
-import { DifficultyPicker, Divider, NoWebGL, Score, Scoreboard, StatusPill, TitleCard, Toolbar } from './Hud';
+import { DifficultyPicker, Divider, HudButtons, NoWebGL, Score, Scoreboard, StatusPill, TitleCard, Toolbar } from './Hud';
 
 const AI_DELAY_MS = 600;
 const COLORS = { X: '#ff7a6b', O: '#4fd8cc', D: '#c3d6e3' };
-
-const cellName = (i: number) => `row ${Math.floor(i / 3) + 1}, column ${(i % 3) + 1}`;
 
 // three.js and the scene load after the page shell; the dolphin loader covers the wait.
 const BoardScene = dynamic(() => import('./BoardScene'), { ssr: false });
 
 export default function Game() {
+  const t = useT();
+  const tt = t.ttt;
+  const cellName = (i: number) => tt.cell(Math.floor(i / 3) + 1, (i % 3) + 1);
   const [match, dispatch] = useReducer(matchReducer, undefined, () => initialMatch('ai', 'easy')); // opens against the computer, on Easy
   const [noGL, setNoGL] = useState(false);
   const [ready, setReady] = useState(false);
@@ -63,20 +65,20 @@ export default function Game() {
   );
 
   let status: string;
-  if (game.winner === 'D') status = 'Draw by threefold repetition! Press “New game” to play again';
-  else if (game.winner) status = ai ? (game.winner === 'X' ? 'You win!' : 'The computer wins this round!') : `Player ${game.winner} wins!`;
-  else if (ai) status = game.turn === 'X' ? 'Your turn (X)' : 'Computer is thinking…';
-  else status = `Player ${game.turn}’s turn`;
+  if (game.winner === 'D') status = tt.draw;
+  else if (game.winner) status = ai ? (game.winner === 'X' ? tt.youWin : tt.computerWins) : tt.playerWins(game.winner);
+  else if (ai) status = game.turn === 'X' ? tt.yourTurn : tt.thinking;
+  else status = tt.playerTurn(game.turn);
   const statusColor = COLORS[game.winner === 'D' ? 'D' : (game.winner ?? game.turn)];
   const hint =
     vanishing !== null
-      ? `The faded ${game.turn} at ${cellName(vanishing)} vanishes on this move`
+      ? tt.vanishHint(game.turn, cellName(vanishing))
       : null;
 
   const cellLabel = (i: number) => {
     const c = game.board[i];
-    const what = c ? `${c}${i === vanishing ? ', about to vanish' : ''}` : 'empty';
-    return `Square ${cellName(i)}: ${what}`;
+    const what = c ? `${c}${i === vanishing ? tt.aboutToVanish : ''}` : tt.empty;
+    return tt.square(cellName(i), what);
   };
 
   return (
@@ -86,16 +88,18 @@ export default function Game() {
 
       <div className="hud">
         <div className="hud-top">
-          <TitleCard title="Lantern Line" subtitle="Sunset Valley · each side keeps only 3 pieces" />
+          <TitleCard title="Lantern Line" subtitle={tt.subtitle} />
           <div className="hud-top-right">
             <Scoreboard>
-              <Score icon={<XIcon />} value={scores.X} label={ai ? 'You' : 'Player X'} testId="score-x" />
+              <Score icon={<XIcon />} value={scores.X} label={ai ? t.you : tt.player('X')} testId="score-x" />
               <Divider />
-              <Score icon={<DrawIcon />} value={scores.D} label="Draws" testId="score-d" narrow />
+              <Score icon={<DrawIcon />} value={scores.D} label={t.draws} testId="score-d" narrow />
               <Divider />
-              <Score icon={<OIcon />} value={scores.O} label={ai ? 'Computer' : 'Player O'} testId="score-o" />
+              <Score icon={<OIcon />} value={scores.O} label={ai ? t.computer : tt.player('O')} testId="score-o" />
             </Scoreboard>
-            <HowToPlay subtitle="Lantern Line · first to line up 3 wins" cards={TIC_TAC_TOE_HELP} />
+            <HudButtons>
+              <HowToPlay subtitle={tt.helpSubtitle} cards={TIC_TAC_TOE_HELP} />
+            </HudButtons>
           </div>
         </div>
 
@@ -111,12 +115,12 @@ export default function Game() {
           >
             {ai && <DifficultyPicker value={difficulty} onChange={(d) => dispatch({ type: 'setDifficulty', difficulty: d })} />}
           </Toolbar>
-          <p className="help">Drag to rotate · Scroll to zoom · Click a square to play · A 4th piece removes your oldest</p>
+          <p className="help">{tt.controls}</p>
         </div>
       </div>
 
       {/* Keyboard / screen-reader board (R7.2); visually hidden until focused. */}
-      <div className="a11y-board" role="grid" aria-label="Board (keyboard)">
+      <div className="a11y-board" role="grid" aria-label={t.boardKeyboard}>
         {[0, 1, 2].map((r) => (
           <div role="row" key={r}>
             {[0, 1, 2].map((c) => {

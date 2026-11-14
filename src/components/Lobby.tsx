@@ -1,9 +1,15 @@
-/** Game lobby (`/`): header, hero, game grid, call-to-action band and footer. Static, so it stays a Server Component. */
+'use client';
+
+/**
+ * Game lobby (`/`): header, hero, game grid, call-to-action band and footer. A Client Component so its text follows
+ * the chosen language; it is still prerendered (in English) for the first paint and for search engines.
+ */
 import Image from 'next/image';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import tano from '@/assets/tano.png';
 import { GAMES, type GameId } from '@/lib/games';
+import { useT, type Dict } from '@/lib/i18n';
 import { ForestArt, LagoonArt, MoonArt, SunsetArt } from './gameArt';
 import PlayRecentLink from './PlayRecentLink';
 import { SiteFooter, SiteHeader } from './SiteChrome';
@@ -21,28 +27,26 @@ const OMark = ({ size = 34 }: { size?: number }) => (
 
 const HERO_BOARD = ['X', null, 'O', null, 'X', null, 'O', null, 'X'] as const;
 
-const CARDS: Record<GameId, { description: string; tags: string[]; art: ReactNode; artBg: string }> = {
+type Tag = keyof Dict['tags'];
+
+const CARDS: Record<GameId, { tags: Tag[]; art: ReactNode; artBg: string }> = {
   'lantern-line': {
-    description: 'Line up 3 in a row on a board floating in a sunset valley. Rotate the scene freely.',
-    tags: ['3D', '2 players', 'vs Computer'],
+    tags: ['3d', 'pvp', 'ai'],
     art: <SunsetArt />,
     artBg: '#2f5f80',
   },
   'ember-and-tide': {
-    description: 'Fire vs Water on a 5×5 board: pieces drop in and stack up to 5 high. Connect 4 in any direction to win.',
-    tags: ['3D', '2 players', 'vs Computer', 'Hard'],
+    tags: ['3d', 'pvp', 'ai', 'hard'],
     art: <MoonArt />,
     artBg: '#0f2550',
   },
   tidepool: {
-    description: "Pearl vs Coral on a hexagonal board in a lagoon. Push lines of marbles and knock 6 of your opponent's into the sea.",
-    tags: ['3D', '2 players', 'vs Computer', 'Strategy'],
+    tags: ['3d', 'pvp', 'ai', 'strategy'],
     art: <LagoonArt />,
     artBg: '#2f6f8f',
   },
   canopy: {
-    description: 'Amber vs Violet on a 5×5 forest board. Move a climber, grow a tree, cut one back, and light lanterns on 2 treetops to win.',
-    tags: ['3D', '2 players', 'vs Computer', 'Strategy'],
+    tags: ['3d', 'pvp', 'ai', 'strategy'],
     art: <ForestArt />,
     artBg: '#3f7a6a',
   },
@@ -50,6 +54,7 @@ const CARDS: Record<GameId, { description: string; tags: string[]; art: ReactNod
 
 
 export default function Lobby() {
+  const t = useT();
   return (
     <div className="lobby">
       <SiteHeader home />
@@ -57,12 +62,12 @@ export default function Lobby() {
       <main>
         <section className="lobby-section hero">
           <div className="hero-copy">
-            <p className="hero-kicker">Light games, right in your browser</p>
-            <h1>Classic games. Breathtaking worlds.</h1>
-            <p className="hero-lead">No install, no account. Open it and play, with a friend beside you or against the computer.</p>
+            <p className="hero-kicker">{t.heroKicker}</p>
+            <h1>{t.heroTitle}</h1>
+            <p className="hero-lead">{t.heroLead}</p>
             <div className="hero-actions">
               <PlayRecentLink className="cta cta-lg" named />
-              <a className="outline-btn" href="#games">See all games</a>
+              <a className="outline-btn" href="#games">{t.seeAllGames}</a>
             </div>
           </div>
 
@@ -84,8 +89,8 @@ export default function Lobby() {
 
         <section id="games" className="lobby-section games">
           <div className="games-head">
-            <h2>All games</h2>
-            <p>{GAMES.length} games live · more coming soon</p>
+            <h2>{t.allGames}</h2>
+            <p>{t.gamesLive(GAMES.length)}</p>
           </div>
 
           <div className="games-grid">
@@ -95,15 +100,15 @@ export default function Lobby() {
                 <Link key={id} className="game-card" href={href}>
                   <div className="game-art" style={{ background: g.artBg }}>
                     {g.art}
-                    <span className="game-badge">NEW</span>
+                    <span className="game-badge">{t.badgeNew}</span>
                   </div>
                   <div className="game-body">
                     <h3>{name}</h3>
-                    <p>{g.description}</p>
+                    <p>{t.cards[id]}</p>
                     <div className="game-tags">
-                      {g.tags.map((t) => <span key={t}>{t}</span>)}
+                      {g.tags.map((tag) => <span key={tag}>{t.tags[tag]}</span>)}
                     </div>
-                    <span className="game-play">Play</span>
+                    <span className="game-play">{t.play}</span>
                   </div>
                 </Link>
               );
@@ -114,8 +119,8 @@ export default function Lobby() {
                 <rect x="3" y="7" width="18" height="11" rx="4" />
                 <path d="M8 11v3M6.5 12.5h3M15 12h.01M17.5 13.5h.01" />
               </svg>
-              <h3>More games</h3>
-              <p>Coming soon</p>
+              <h3>{t.moreGames}</h3>
+              <p>{t.comingSoon}</p>
             </div>
           </div>
         </section>
@@ -123,20 +128,7 @@ export default function Lobby() {
         <section id="about" className="lobby-section about" aria-labelledby="about-title">
           <h2 id="about-title">Verdant</h2>
           <div className="about-copy">
-            <p>
-              Verdant is a small collection of relaxing games for students, university students and office workers: a
-              place to unwind with friends after hours of classes, exams or meetings. Every round takes just a few
-              minutes, so it fits into a lunch break, the gap between lectures or the end of a long day.
-            </p>
-            <p>
-              The games open straight in your browser, on a laptop or a phone. There is nothing to install, no account
-              to create and nothing to pay. Sit next to a friend and take turns on the same screen, or play against the
-              computer on Easy, Medium or Hard when you are on your own.
-            </p>
-            <p>
-              I build Verdant on my own and add new games over time. If you have an idea, feedback or just want to say
-              hello, my social links are at the bottom of the page.
-            </p>
+            {t.about.map((p) => <p key={p.slice(0, 24)}>{p}</p>)}
           </div>
         </section>
 
@@ -145,11 +137,11 @@ export default function Lobby() {
       <section className="lobby-cta" aria-labelledby="cta-title">
         <div className="lobby-cta-inner">
           <div className="lobby-cta-copy">
-            <h2 id="cta-title">Interested in working with me?</h2>
-            <a className="cta-white" href="#">Connect now</a>
+            <h2 id="cta-title">{t.ctaTitle}</h2>
+            <a className="cta-white" href="#">{t.ctaButton}</a>
           </div>
           <div className="lobby-cta-art">
-            <Image src={tano} alt="Tano the whale guardian waving hello and holding his lantern staff" sizes="295px" />
+            <Image src={tano} alt={t.tanoAlt} sizes="295px" />
           </div>
         </div>
       </section>

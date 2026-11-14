@@ -199,7 +199,7 @@ try {
   const overflow = await phone.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
   check('no horizontal scroll at 390px', !overflow);
   // The top HUD (back · scoreboard · help) must stay on one row on narrow phones, against the computer too.
-  await phone.getByRole('button', { name: 'Settings' }).click();
+  await phone.getByRole('button', { name: 'Options' }).click();
   await phone.getByRole('button', { name: 'vs Computer' }).click();
   for (const width of [390, 375, 360, 320]) {
     await phone.setViewportSize({ width, height: 700 });
@@ -311,8 +311,8 @@ try {
   // One 3D scene at a time: software-rendering two at once starves the browser and actions time out.
   await page.goto('about:blank');
   await phone.goto(`${URL}/ember-and-tide`, { waitUntil: 'networkidle' });
-  check('phone: toolbar hidden until Settings is tapped', !(await phone.getByRole('button', { name: 'vs Computer' }).isVisible()));
-  await phone.getByRole('button', { name: 'Settings' }).click();
+  check('phone: toolbar hidden until Options is tapped', !(await phone.getByRole('button', { name: 'vs Computer' }).isVisible()));
+  await phone.getByRole('button', { name: 'Options' }).click();
   await phone.getByRole('button', { name: 'vs Computer' }).click();
   await phone.waitForTimeout(1000);
   check('ember & tide: no horizontal scroll at 390px', !(await phone.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)));

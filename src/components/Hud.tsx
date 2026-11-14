@@ -4,18 +4,17 @@
 import Link from 'next/link';
 import { useId, useState, type ReactNode } from 'react';
 import type { Difficulty, Mode } from '@/lib/game/types';
+import { useT } from '@/lib/i18n';
+import SettingsDialog from './SettingsDialog';
 
-const DIFFICULTIES: { id: Difficulty; label: string }[] = [
-  { id: 'easy', label: 'Easy' },
-  { id: 'medium', label: 'Medium' },
-  { id: 'hard', label: 'Hard' },
-];
+const DIFFICULTIES: Difficulty[] = ['easy', 'medium', 'hard'];
 
 /** On phones the card shrinks to a round back-arrow link to the lobby; the title stays for screen readers. */
 export function TitleCard({ title, subtitle }: { title: string; subtitle: string }) {
+  const t = useT();
   return (
     <div className="panel title-card">
-      <Link className="title-back" href="/" aria-label="Back to Verdant">
+      <Link className="title-back" href="/" aria-label={t.backToVerdant}>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d="M19 12H5M11 6l-6 6 6 6" />
         </svg>
@@ -30,7 +29,17 @@ export function TitleCard({ title, subtitle }: { title: string; subtitle: string
 }
 
 export function Scoreboard({ children }: { children: ReactNode }) {
-  return <div className="panel scoreboard" aria-label="Score">{children}</div>;
+  return <div className="panel scoreboard" aria-label={useT().score}>{children}</div>;
+}
+
+/** The top-right buttons every game shares: How to play is passed in, Settings is the same everywhere. */
+export function HudButtons({ children }: { children: ReactNode }) {
+  return (
+    <div className="hud-buttons">
+      {children}
+      <SettingsDialog className="cbtn hud-settings settings-btn" />
+    </div>
+  );
 }
 
 export function Divider() {
@@ -59,12 +68,7 @@ export function Score({ icon, value, label, testId, narrow, sub }: ScoreProps) {
 }
 
 export function NoWebGL() {
-  return (
-    <div className="panel nogl">
-      WebGL isn’t available in this browser, so the 3D scene can’t be drawn. Try a recent version of Chrome, Edge or
-      Firefox — you can still play with the keyboard (Tab key).
-    </div>
-  );
+  return <div className="panel nogl">{useT().noWebGL}</div>;
 }
 
 export function StatusPill({ color, status, hint }: { color: string; status: string; hint?: string | null }) {
@@ -80,11 +84,12 @@ export function StatusPill({ color, status, hint }: { color: string; status: str
 }
 
 export function DifficultyPicker({ value, onChange }: { value: Difficulty; onChange: (difficulty: Difficulty) => void }) {
+  const t = useT();
   return (
-    <div role="group" aria-label="Difficulty" className="segmented">
+    <div role="group" aria-label={t.difficulty} className="segmented">
       {DIFFICULTIES.map((d) => (
-        <button key={d.id} type="button" className="cbtn seg" aria-pressed={value === d.id} onClick={() => onChange(d.id)}>
-          {d.label}
+        <button key={d} type="button" className="cbtn seg" aria-pressed={value === d} onClick={() => onChange(d)}>
+          {t[d]}
         </button>
       ))}
     </div>
@@ -100,19 +105,20 @@ interface ToolbarProps {
   children?: ReactNode;
 }
 
-/** On phones the toolbar collapses behind a bottom “Settings” tab; on wider screens it is always shown. */
+/** On phones the toolbar collapses behind a bottom “Options” tab; on wider screens it is always shown. */
 export function Toolbar({ mode, onMode, onNewGame, onResetScores, children }: ToolbarProps) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const panelId = useId();
   return (
     <div className="toolbar-wrap" data-open={open || undefined}>
       <div id={panelId} className="panel toolbar">
-        <div role="group" aria-label="Game mode" className="segmented">
+        <div role="group" aria-label={t.gameMode} className="segmented">
           <button type="button" className="cbtn seg" aria-pressed={mode === 'pvp'} onClick={() => onMode('pvp')}>
-            2 players
+            {t.twoPlayers}
           </button>
           <button type="button" className="cbtn seg" aria-pressed={mode === 'ai'} onClick={() => onMode('ai')}>
-            vs Computer
+            {t.vsComputer}
           </button>
         </div>
         {children}
@@ -121,10 +127,10 @@ export function Toolbar({ mode, onMode, onNewGame, onResetScores, children }: To
             <path d="M20 11a8 8 0 1 0-2.3 5.7" />
             <path d="M20 4v7h-7" />
           </svg>
-          New game
+          {t.newGame}
         </button>
         <button type="button" className="cbtn ghost" onClick={onResetScores}>
-          Reset score
+          {t.resetScore}
         </button>
       </div>
       <button
@@ -137,7 +143,7 @@ export function Toolbar({ mode, onMode, onNewGame, onResetScores, children }: To
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d={open ? 'M6 9l6 6 6-6' : 'M6 15l6-6 6 6'} />
         </svg>
-        Settings
+        {t.options}
       </button>
     </div>
   );

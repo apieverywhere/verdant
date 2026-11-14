@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Be_Vietnam_Pro } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import { LangSync } from '@/components/SettingsDialog';
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, SITE_URL } from '@/lib/site';
 import './globals.css';
 
@@ -44,6 +45,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={font.variable} data-scroll-behavior="smooth">
       <body>
         {children}
+        <LangSync />
         {/* Vercel Web Analytics (page views) and Speed Insights (Core Web Vitals); no-ops outside Vercel. */}
         <Analytics />
         <SpeedInsights />

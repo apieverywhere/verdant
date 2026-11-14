@@ -1,7 +1,11 @@
-/** Header and footer shared by the lobby and the other site pages (sitemap, privacy). Server Components. */
+'use client';
+
+/** Header and footer shared by the lobby and the sitemap page. Client Components, so they follow the chosen language. */
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { useT } from '@/lib/i18n';
 import PlayRecentLink from './PlayRecentLink';
+import SettingsDialog from './SettingsDialog';
 
 /** The author's social profiles, shown in the footer. */
 export const SOCIAL: { label: string; href: string; icon: ReactNode }[] = [
@@ -38,9 +42,9 @@ export const SOCIAL: { label: string; href: string; icon: ReactNode }[] = [
 
 /** A free browser game with no accounts only needs its terms and privacy policy. */
 const LEGAL_LINKS = [
-  { label: 'Terms of Service', href: '/terms' },
-  { label: 'Privacy Policy', href: '/privacy' },
-];
+  { key: 'terms', href: '/terms' },
+  { key: 'privacy', href: '/privacy' },
+] as const;
 
 export const Logo = ({ size, bg, fg }: { size: number; bg: string; fg: string }) => (
   <svg width={size} height={size} viewBox="0 0 34 34" fill="none" aria-hidden="true">
@@ -53,6 +57,7 @@ export const Logo = ({ size, bg, fg }: { size: number; bg: string; fg: string })
 /** On the lobby the nav scrolls within the page; elsewhere it goes back to the lobby sections. */
 export function SiteHeader({ home = false }: { home?: boolean }) {
   const base = home ? '' : '/';
+  const t = useT();
   return (
     <header className="lobby-header">
       <div className="lobby-bar">
@@ -60,10 +65,11 @@ export function SiteHeader({ home = false }: { home?: boolean }) {
           <Logo size={34} bg="#ffd27a" fg="#241a3a" />
           <span>Verdant</span>
         </Link>
-        <nav className="lobby-nav" aria-label="Main navigation">
-          <a href={`${base}#games`}>Games</a>
-          <a href={`${base}#about`}>About</a>
+        <nav className="lobby-nav" aria-label={t.mainNav}>
+          <a href={`${base}#games`}>{t.navGames}</a>
+          <a href={`${base}#about`}>{t.navAbout}</a>
           <PlayRecentLink className="cta" />
+          <SettingsDialog className="cbtn settings-btn nav-settings" />
         </nav>
       </div>
     </header>
@@ -71,12 +77,13 @@ export function SiteHeader({ home = false }: { home?: boolean }) {
 }
 
 export function SiteFooter() {
+  const t = useT();
   return (
     <footer className="lobby-footer">
       <div className="lobby-footer-inner">
         <div className="footer-follow">
-          <p>Follow me on</p>
-          <nav aria-label="Social media" className="footer-social">
+          <p>{t.followMe}</p>
+          <nav aria-label={t.socialNav} className="footer-social">
             {SOCIAL.map((s) => (
               <a key={s.label} href={s.href} target="_blank" rel="me noopener noreferrer" aria-label={s.label}>{s.icon}</a>
             ))}
@@ -85,15 +92,15 @@ export function SiteFooter() {
 
         <div className="footer-rule" />
 
-        <nav aria-label="Legal and site links" className="footer-links">
-          {LEGAL_LINKS.map((l) => <Link key={l.label} href={l.href}>{l.label}</Link>)}
+        <nav aria-label={t.legalNav} className="footer-links">
+          {LEGAL_LINKS.map((l) => <Link key={l.key} href={l.href}>{t[l.key]}</Link>)}
         </nav>
 
         <div className="footer-bottom">
           <span className="footer-copy">© 2026 Verdant</span>
           <div className="footer-end">
-            <Link className="footer-sitemap" href="/sitemap">Sitemap</Link>
-            <Link className="footer-brand" href="/" aria-label="Verdant home">
+            <Link className="footer-sitemap" href="/sitemap">{t.sitemap}</Link>
+            <Link className="footer-brand" href="/" aria-label={t.home}>
               <Logo size={40} bg="#ffffff" fg="#08192a" />
               <span>Verdant</span>
             </Link>

@@ -6,22 +6,25 @@ import { chooseColumn } from '@/lib/fire-water/ai';
 import type { AiReply } from '@/lib/fire-water/ai.worker';
 import { initialMatch, isAiTurn, matchReducer } from '@/lib/fire-water/match';
 import { COLUMNS, SIZE, dropCell, stackHeight } from '@/lib/fire-water/rules';
-import type { Mode, Player } from '@/lib/game/types';
+import type { Mode } from '@/lib/game/types';
+import { useT } from '@/lib/i18n';
 import { rememberGame } from '@/lib/recentGame';
 import type { FireWaterView } from '@/lib/scene/FireWaterController';
 import SceneLoader from './SceneLoader';
 import { FIRE_WATER_HELP } from './helpCards';
 import HowToPlay from './HowToPlay';
-import { DifficultyPicker, Divider, NoWebGL, Score, Scoreboard, StatusPill, TitleCard, Toolbar } from './Hud';
+import { DifficultyPicker, Divider, HudButtons, NoWebGL, Score, Scoreboard, StatusPill, TitleCard, Toolbar } from './Hud';
 
 const AI_DELAY_MS = 650;
 const COLORS = { X: '#ff7a4d', O: '#5ab0ff', D: '#c3d6e3' };
-const NAME: Record<Player, string> = { X: 'Fire', O: 'Water' };
 
 // three.js and the scene load after the page shell; the dolphin loader covers the wait.
 const FireWaterScene = dynamic(() => import('./FireWaterScene'), { ssr: false });
 
 export default function FireWaterGame() {
+  const t = useT();
+  const tf = t.fw;
+  const NAME = tf.names;
   const [match, dispatch] = useReducer(matchReducer, undefined, () => initialMatch('ai', 'easy')); // opens against the computer, on Easy
   const [noGL, setNoGL] = useState(false);
   const [ready, setReady] = useState(false);
@@ -103,18 +106,18 @@ export default function FireWaterGame() {
   );
 
   let status: string;
-  if (game.winner === 'D') status = 'It’s a draw! Press “New game” to play again';
-  else if (game.winner) status = ai ? (game.winner === 'X' ? 'You (Fire) win!' : 'The computer (Water) wins this round!') : `${NAME[game.winner]} wins!`;
-  else if (ai) status = game.turn === 'X' ? 'Your turn (Fire)' : 'Computer (Water) is thinking…';
-  else status = `${NAME[game.turn]}’s turn`;
+  if (game.winner === 'D') status = tf.draw;
+  else if (game.winner) status = ai ? (game.winner === 'X' ? tf.youWin : tf.computerWins) : tf.sideWins(NAME[game.winner]);
+  else if (ai) status = game.turn === 'X' ? tf.yourTurn : tf.thinking;
+  else status = tf.sideTurn(NAME[game.turn]);
   const statusColor = COLORS[game.winner === 'D' ? 'D' : (game.winner ?? game.turn)];
 
   const columnLabel = (col: number) => {
-    const name = `Row ${Math.floor(col / SIZE) + 1}, column ${(col % SIZE) + 1}`;
+    const name = tf.column(Math.floor(col / SIZE) + 1, (col % SIZE) + 1);
     const height = stackHeight(game.board, col);
-    if (!height) return `${name}: empty`;
+    if (!height) return tf.empty(name);
     const top = game.board[col + COLUMNS * (height - 1)]!;
-    return `${name}: stack of ${height}, ${NAME[top]} on top`;
+    return tf.stack(name, height, NAME[top]);
   };
 
   return (
@@ -124,16 +127,18 @@ export default function FireWaterGame() {
 
       <div className="hud">
         <div className="hud-top">
-          <TitleCard title="Ember & Tide" subtitle="Pieces stack from the bottom up · 4 in a row wins" />
+          <TitleCard title="Ember & Tide" subtitle={tf.subtitle} />
           <div className="hud-top-right">
             <Scoreboard>
-              <Score icon={<FireIcon />} value={scores.X} label={ai ? 'You · Fire' : 'Fire'} testId="score-x" />
+              <Score icon={<FireIcon />} value={scores.X} label={ai ? `${t.you} · ${NAME.X}` : NAME.X} testId="score-x" />
               <Divider />
-              <Score icon={<DrawIcon />} value={scores.D} label="Draws" testId="score-d" narrow />
+              <Score icon={<DrawIcon />} value={scores.D} label={t.draws} testId="score-d" narrow />
               <Divider />
-              <Score icon={<WaterIcon />} value={scores.O} label={ai ? 'CPU · Water' : 'Water'} testId="score-o" />
+              <Score icon={<WaterIcon />} value={scores.O} label={ai ? `${t.cpu} · ${NAME.O}` : NAME.O} testId="score-o" />
             </Scoreboard>
-            <HowToPlay subtitle="Ember & Tide · drop pieces, stack them, connect 4" cards={FIRE_WATER_HELP} />
+            <HudButtons>
+              <HowToPlay subtitle={tf.helpSubtitle} cards={FIRE_WATER_HELP} />
+            </HudButtons>
           </div>
         </div>
 
@@ -149,12 +154,12 @@ export default function FireWaterGame() {
           >
             {ai && <DifficultyPicker value={difficulty} onChange={(d) => dispatch({ type: 'setDifficulty', difficulty: d })} />}
           </Toolbar>
-          <p className="help">Click a square to drop a piece · Up to 5 pieces per stack · Drag to rotate · Scroll to zoom</p>
+          <p className="help">{tf.controls}</p>
         </div>
       </div>
 
       {/* Keyboard / screen-reader board (F4.5); visually hidden until focused. */}
-      <div className="a11y-board" role="grid" aria-label="Board (keyboard)">
+      <div className="a11y-board" role="grid" aria-label={t.boardKeyboard}>
         {Array.from({ length: SIZE }, (_, r) => (
           <div role="row" key={r}>
             {Array.from({ length: SIZE }, (_, c) => {

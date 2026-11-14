@@ -3,25 +3,32 @@
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import type { Mode, Player } from '@/lib/game/types';
+import { useT } from '@/lib/i18n';
 import { rememberGame } from '@/lib/recentGame';
 import type { TidepoolPick, TidepoolView } from '@/lib/scene/TidepoolController';
 import { chooseMove } from '@/lib/tidepool/ai';
 import type { AiReply } from '@/lib/tidepool/ai.worker';
 import { initialMatch, isAiTurn, matchReducer } from '@/lib/tidepool/match';
-import { cellName, DIR_NAMES, lineOf, movesForGroup, other, WIN_PUSHES, type Move } from '@/lib/tidepool/rules';
+import { cellPos, lineOf, movesForGroup, other, WIN_PUSHES, type Move } from '@/lib/tidepool/rules';
 import { TIDEPOOL_HELP } from './helpCards';
 import HowToPlay from './HowToPlay';
-import { DifficultyPicker, Divider, NoWebGL, Score, Scoreboard, StatusPill, TitleCard, Toolbar } from './Hud';
+import { DifficultyPicker, Divider, HudButtons, NoWebGL, Score, Scoreboard, StatusPill, TitleCard, Toolbar } from './Hud';
 import SceneLoader from './SceneLoader';
 
 const AI_DELAY_MS = 650;
 const COLORS: Record<Player, string> = { X: '#f1ece2', O: '#ff7a6b' };
-const NAME: Record<Player, string> = { X: 'Pearl', O: 'Coral' };
 
 // three.js and the scene load after the page shell; the dolphin loader covers the wait.
 const TidepoolScene = dynamic(() => import('./TidepoolScene'), { ssr: false });
 
 export default function TidepoolGame() {
+  const t = useT();
+  const tp = t.tp;
+  const NAME = tp.names;
+  const cellName = (cell: number) => {
+    const { row, hole } = cellPos(cell);
+    return tp.cell(row, hole);
+  };
   const [match, dispatch] = useReducer(matchReducer, undefined, () => initialMatch('ai', 'easy')); // opens against the computer, on Easy
   const [noGL, setNoGL] = useState(false);
   const [ready, setReady] = useState(false);
@@ -125,19 +132,19 @@ export default function TidepoolGame() {
   let status: string;
   if (game.winner) {
     status = ai
-      ? game.winner === 'X' ? `You (Pearl) win! ${WIN_PUSHES} Coral marbles in the sea` : 'The computer (Coral) wins this round!'
-      : `${NAME[game.winner]} wins! ${WIN_PUSHES} marbles pushed off`;
-  } else if (aiTurn) status = 'Computer (Coral) is thinking…';
-  else if (sel.length) status = `${NAME[game.turn]}: ${sel.length} selected · click a gold marker`;
-  else status = `${ai ? 'Your turn (Pearl)' : `${NAME[game.turn]}’s turn`} · select 1–3 marbles in a line`;
+      ? game.winner === 'X' ? tp.youWin(WIN_PUSHES) : tp.computerWins
+      : tp.sideWins(NAME[game.winner], WIN_PUSHES);
+  } else if (aiTurn) status = tp.thinking;
+  else if (sel.length) status = tp.selected(NAME[game.turn], sel.length);
+  else status = `${ai ? tp.yourTurn : tp.sideTurn(NAME[game.turn])} · ${tp.selectHint}`;
   const statusColor = COLORS[game.winner ?? game.turn];
 
   const moveLabel = (m: Move) => {
-    const where = DIR_NAMES[m.dir];
-    if (m.lead < 0) return `Step ${where} (sideways)`;
-    if (!m.push) return `Move ${where}`;
-    const pushed = `${m.push} ${NAME[other(game.turn)]} marble${m.push > 1 ? 's' : ''}`;
-    return m.off ? `Move ${where}, pushing ${pushed} — one falls into the sea` : `Move ${where}, pushing ${pushed}`;
+    const where = tp.dirs[m.dir];
+    if (m.lead < 0) return tp.stepSideways(where);
+    if (!m.push) return tp.move(where);
+    const pushed = tp.pushed(m.push, NAME[other(game.turn)]);
+    return m.off ? tp.movePushOff(where, pushed) : tp.movePush(where, pushed);
   };
 
   return (
@@ -147,26 +154,28 @@ export default function TidepoolGame() {
 
       <div className="hud">
         <div className="hud-top">
-          <TitleCard title="Tidepool" subtitle="Push 6 of your opponent’s marbles into the sea" />
+          <TitleCard title="Tidepool" subtitle={tp.subtitle} />
           <div className="hud-top-right">
             <Scoreboard>
               <Score
                 icon={<MarbleIcon fill="#f1ece2" shine="#ffffff" />}
                 value={<>{game.lost.O}<small>/{WIN_PUSHES}</small></>}
-                label={ai ? 'You · Pearl' : 'Pearl'}
-                sub={`Wins ${wins.X}`}
+                label={ai ? `${t.you} · ${NAME.X}` : NAME.X}
+                sub={t.wins(wins.X)}
                 testId="score-x"
               />
               <Divider />
               <Score
                 icon={<MarbleIcon fill="#ff6f5e" shine="#ffb3a8" />}
                 value={<>{game.lost.X}<small>/{WIN_PUSHES}</small></>}
-                label={ai ? 'CPU · Coral' : 'Coral'}
-                sub={`Wins ${wins.O}`}
+                label={ai ? `${t.cpu} · ${NAME.O}` : NAME.O}
+                sub={t.wins(wins.O)}
                 testId="score-o"
               />
             </Scoreboard>
-            <HowToPlay subtitle="Tidepool · Pearl vs Coral · first to push off 6 wins" cards={TIDEPOOL_HELP} />
+            <HudButtons>
+              <HowToPlay subtitle={tp.helpSubtitle} cards={TIDEPOOL_HELP} />
+            </HudButtons>
           </div>
         </div>
 
@@ -182,13 +191,13 @@ export default function TidepoolGame() {
           >
             {ai && <DifficultyPicker value={difficulty} onChange={(d) => dispatch({ type: 'setDifficulty', difficulty: d })} />}
           </Toolbar>
-          <p className="help">Click 1–3 of your marbles in a line · Click a gold marker to move · Drag to rotate · Scroll to zoom</p>
+          <p className="help">{tp.controls}</p>
         </div>
       </div>
 
       {/* Keyboard / screen-reader controls; visually hidden until focused. */}
-      <div className="a11y-board a11y-list" role="group" aria-label="Marbles (keyboard)">
-        <div role="group" aria-label={`${NAME[game.turn]} marbles`}>
+      <div className="a11y-board a11y-list" role="group" aria-label={tp.marblesKeyboard}>
+        <div role="group" aria-label={tp.marblesGroup(NAME[game.turn])}>
           {game.board.map((p, cell) =>
             p === game.turn ? (
               <button
@@ -205,7 +214,7 @@ export default function TidepoolGame() {
           )}
         </div>
         {moves.length > 0 && (
-          <div role="group" aria-label="Moves for the selected marbles">
+          <div role="group" aria-label={tp.movesGroup}>
             {moves.map((m, i) => (
               <button key={i} type="button" data-move={i} onClick={() => dispatch({ type: 'move', move: m, source: 'human' })}>
                 {moveLabel(m)}

@@ -2,7 +2,7 @@
  * three.js scene for Ember & Tide: a moonlit ice lake under the aurora, snowy pines, and a snow island where the
  * 5×5 board stands between two fire braziers and two tide lamps. Pieces are lacquered and mirror the sky; the moon
  * casts real shadows. Same contract as SceneController: it holds no rules, receives a view and derives animations by diffing views.
- * See docs/specs/game-lobby/design.md §3.
+ * See docs/specs/ember-and-tide/design.md §3.
  */
 import * as THREE from 'three';
 import { CELLS, COLUMNS, dropCell, stackHeight } from '../fire-water/rules';
