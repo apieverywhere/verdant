@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
+import { useMusic, useOnChange, useSfx } from '@/lib/audio/useAudio';
 import { chooseMove } from '@/lib/game/ai';
 import { initialMatch, isAiTurn, matchReducer } from '@/lib/game/match';
 import { vanishingCell } from '@/lib/game/rules';
@@ -12,7 +13,7 @@ import type { SceneView } from '@/lib/scene/SceneController';
 import SceneLoader from './SceneLoader';
 import { TIC_TAC_TOE_HELP } from './helpCards';
 import HowToPlay from './HowToPlay';
-import { DifficultyPicker, Divider, HudButtons, NoWebGL, Score, Scoreboard, StatusPill, TitleCard, Toolbar } from './Hud';
+import { DifficultyPicker, Divider, HudButtons, NoWebGL, ResultCard, Score, Scoreboard, StatusPill, TitleCard, Toolbar, type RoundResult } from './Hud';
 
 const AI_DELAY_MS = 600;
 const COLORS = { X: '#ff7a6b', O: '#4fd8cc', D: '#c3d6e3' };
@@ -23,6 +24,8 @@ const BoardScene = dynamic(() => import('./BoardScene'), { ssr: false });
 export default function Game() {
   const t = useT();
   const tt = t.ttt;
+  useMusic('sunset');
+  const sfx = useSfx();
   const cellName = (i: number) => tt.cell(Math.floor(i / 3) + 1, (i % 3) + 1);
   const [match, dispatch] = useReducer(matchReducer, undefined, () => initialMatch('ai', 'easy')); // opens against the computer, on Easy
   const [noGL, setNoGL] = useState(false);
@@ -51,6 +54,18 @@ export default function Game() {
   // The lobby's Play buttons return to the game played last.
   useEffect(() => rememberGame('lantern-line'), []);
 
+  // Sounds follow the state: a piece set down (and the oldest fading), then the round's outcome.
+  useOnChange(game.moveCount, (n, was) => {
+    if (n <= was) return;
+    sfx('place');
+    if (game.lastRemoved) sfx('vanish', 120);
+  });
+  useOnChange(game.winner, (w) => {
+    if (!w) return;
+    if (w === 'D') sfx('draw', 300);
+    else sfx(ai && w !== 'X' ? 'lose' : 'win', 350);
+  });
+
   const view = useMemo<SceneView>(
     () => ({
       board: game.board,
@@ -74,6 +89,21 @@ export default function Game() {
     vanishing !== null
       ? tt.vanishHint(game.turn, cellName(vanishing))
       : null;
+
+  const result = useMemo<RoundResult | null>(() => {
+    const w = game.winner;
+    if (!w) return null;
+    const names = { X: ai ? t.you : tt.player('X'), O: ai ? t.computer : tt.player('O') };
+    const base = { score: `${names.X} ${scores.X} – ${scores.O} ${names.O}`, round: scores.X + scores.O + scores.D };
+    if (w === 'D') return { ...base, tone: 'draw', title: t.result.draw, detail: tt.reasonDraw };
+    return {
+      ...base,
+      tone: ai ? (w === 'X' ? 'win' : 'lose') : 'win',
+      title: ai ? (w === 'X' ? t.result.youWin : t.result.computerWins) : t.result.sideWins(names[w]),
+      detail: tt.reasonWin,
+      icon: w === 'X' ? <XIcon /> : <OIcon />,
+    };
+  }, [game.winner, ai, scores, t, tt]);
 
   const cellLabel = (i: number) => {
     const c = game.board[i];
@@ -104,6 +134,7 @@ export default function Game() {
         </div>
 
         {noGL && <NoWebGL />}
+        <ResultCard result={result} gameId={match.gameId} onPlayAgain={() => dispatch({ type: 'newGame' })} />
 
         <div className="hud-bottom">
           <StatusPill color={statusColor} status={status} hint={hint} />

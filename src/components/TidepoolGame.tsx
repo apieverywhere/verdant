@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import { useMusic, useOnChange, useSfx } from '@/lib/audio/useAudio';
 import type { Mode, Player } from '@/lib/game/types';
 import { useT } from '@/lib/i18n';
 import { rememberGame } from '@/lib/recentGame';
@@ -12,7 +13,7 @@ import { initialMatch, isAiTurn, matchReducer } from '@/lib/tidepool/match';
 import { cellPos, lineOf, movesForGroup, other, WIN_PUSHES, type Move } from '@/lib/tidepool/rules';
 import { TIDEPOOL_HELP } from './helpCards';
 import HowToPlay from './HowToPlay';
-import { DifficultyPicker, Divider, HudButtons, NoWebGL, Score, Scoreboard, StatusPill, TitleCard, Toolbar } from './Hud';
+import { DifficultyPicker, Divider, HudButtons, NoWebGL, ResultCard, Score, Scoreboard, StatusPill, TitleCard, Toolbar, type RoundResult } from './Hud';
 import SceneLoader from './SceneLoader';
 
 const AI_DELAY_MS = 650;
@@ -25,6 +26,8 @@ export default function TidepoolGame() {
   const t = useT();
   const tp = t.tp;
   const NAME = tp.names;
+  useMusic('lagoon');
+  const sfx = useSfx();
   const cellName = (cell: number) => {
     const { row, hole } = cellPos(cell);
     return tp.cell(row, hole);
@@ -94,6 +97,17 @@ export default function TidepoolGame() {
   // The lobby's Play buttons return to the game played last.
   useEffect(() => rememberGame('tidepool'), []);
 
+  // Sounds: marbles roll, knock into each other, or fall into the sea; a soft tick when picking marbles up.
+  useOnChange(game.last, (l) => {
+    if (!l) return;
+    if (l.off) {
+      sfx('clack');
+      sfx('splash', 260);
+    } else sfx(l.move.push ? 'clack' : 'slide');
+  });
+  useOnChange(sel.length, (n, was) => n > was && sfx('tap'));
+  useOnChange(game.winner, (w) => w && sfx(ai && w !== 'X' ? 'lose' : 'win', 350));
+
   const line = useMemo(() => lineOf(sel), [sel]);
   const moves = useMemo<Move[]>(() => (line && interactive ? movesForGroup(game.board, line, game.turn) : []), [line, interactive, game]);
 
@@ -139,6 +153,20 @@ export default function TidepoolGame() {
   else status = `${ai ? tp.yourTurn : tp.sideTurn(NAME[game.turn])} · ${tp.selectHint}`;
   const statusColor = COLORS[game.winner ?? game.turn];
 
+  const result = useMemo<RoundResult | null>(() => {
+    const w = game.winner;
+    if (!w) return null;
+    const names = { X: ai ? `${t.you} · ${NAME.X}` : NAME.X, O: ai ? `${t.cpu} · ${NAME.O}` : NAME.O };
+    return {
+      tone: ai ? (w === 'X' ? 'win' : 'lose') : 'win',
+      title: ai ? (w === 'X' ? t.result.youWin : t.result.computerWins) : t.result.sideWins(NAME[w]),
+      detail: tp.reasonWin(WIN_PUSHES),
+      score: `${names.X} ${wins.X} – ${wins.O} ${names.O}`,
+      round: wins.X + wins.O,
+      icon: w === 'X' ? <MarbleIcon fill="#f1ece2" shine="#ffffff" /> : <MarbleIcon fill="#ff6f5e" shine="#ffb3a8" />,
+    };
+  }, [game.winner, ai, wins, t, tp, NAME]);
+
   const moveLabel = (m: Move) => {
     const where = tp.dirs[m.dir];
     if (m.lead < 0) return tp.stepSideways(where);
@@ -180,6 +208,7 @@ export default function TidepoolGame() {
         </div>
 
         {noGL && <NoWebGL />}
+        <ResultCard result={result} gameId={match.gameId} onPlayAgain={() => dispatch({ type: 'newGame' })} />
 
         <div className="hud-bottom">
           <StatusPill color={statusColor} status={status} />

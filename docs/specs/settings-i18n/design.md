@@ -35,13 +35,18 @@ interface Settings { lang: Lang; music: number; sfx: number } // music, sfx: 0�
 - Vị trí: `SiteHeader` (class `nav-settings`) và `HudButtons` trong `Hud.tsx` (class `hud-settings`, cùng kiểu với nút “?”, xếp dọc dưới nó). Class của nút và hộp thoại tách khỏi `.help-btn` / `.help-dialog` để không trùng selector của E2E.
 - Thẻ mở thanh công cụ trên điện thoại đổi tên từ “Settings” thành “Options” để không lẫn với Cài đặt.
 
-## 4. Âm thanh (phát triển sau)
+## 4. Âm thanh — `src/lib/audio/`
 
-Hướng đề xuất, sẽ chốt khi bắt đầu làm:
+Quyết định: **tổng hợp toàn bộ bằng Web Audio** thay vì file. Không có gì để tải (bundle thêm vài KB), không vướng bản quyền, và nhạc không bao giờ lặp y hệt.
 
-- Module `src/lib/audio.ts` bọc Web Audio API: một `AudioContext` dùng chung, hai `GainNode` (`music`, `sfx`) nối vào output. Gain = `(volume / 100)²` để thanh trượt nghe đều tai.
-- Đăng ký theo dõi kho cài đặt (`subscribe` giống `useSettings`) để đổi gain ngay khi kéo thanh trượt (A1.5).
-- Mở khoá `AudioContext` ở `pointerdown` / `keydown` đầu tiên (A1.4); `visibilitychange` để tạm dừng nhạc (A1.6).
-- Hook `useSfx()` trả về `play(name)`; component game gọi ở các sự kiện của reducer (nước đi, thắng, thua). Controller 3D không biết gì về âm thanh, giữ hợp đồng “nhận view”.
-- File trong `public/audio/` (định dạng nén, ví dụ `.ogg` + `.m4a` dự phòng), tải lười bằng `fetch` + `decodeAudioData` khi cần lần đầu (A1.7).
-- Bản quyền âm thanh: chỉ dùng tài nguyên tự làm hoặc có giấy phép cho phép dùng thương mại; ghi nguồn trong README.
+| File | Vai trò |
+|---|---|
+| `engine.ts` | `AudioContext` duy nhất, hai `GainNode` `music` / `sfx` → master → output; gain = `(volume / 100)²` (`gainFor`); mở khoá ở `pointerdown` / `keydown` đầu tiên (capture); `whenReady(fn)` xếp hàng việc cần context; theo dõi `subscribeSettings` để đổi gain ngay; `visibilitychange` → `suspend` / `resume` |
+| `sfx.ts` | 14 hiệu ứng, mỗi cái vài dòng từ hai nguyên tố: `tone` (oscillator + envelope, có thể trượt cao độ, lọc thấp) và `noise` (buffer nhiễu trắng lặp qua biquad có sweep); `bell` ghép ba `tone`. `win` là `fanfare(root)` với root lấy từ `fanfareRootHz()` của theme đang chạy (một quãng tám trên gam của cảnh; cảnh thứ dùng trưởng tương đối) để không chỏi với pad. `renderSfx` / `SFX_NAMES` được export cho test. `playSfx(name)` im lặng khi chưa mở khoá, context không chạy hay slider ở 0; mọi lỗi được nuốt |
+| `music.ts` | `THEMES` (4 theme: root MIDI, gam ngũ cung cho giai điệu, 4 hợp âm, giây/ô nhịp, pad, giọng lead, loại ambience); scheduler `setInterval` 200 ms với lookahead 0,6 s; pad = cặp oscillator lệch ±5 cent mỗi nốt, swell 2,5 s, chồng mép sang hợp âm sau; lead = random walk trên gam (`nextLeadNote`), mật độ tăng dần về cuối ô nhịp; ambience = `public/audio/wind.mp3` (bản ghi Pixabay 39,8 s, mono 64 kbps, đã crossfade 3 s cuối vào đầu để lặp liền mạch và chuẩn hoá −23 LUFS bằng ffmpeg) qua lọc thấp có LFO làm gió giật, cutoff và mức khác nhau cho hoàng hôn / hồ băng / rừng, rừng thêm tiếng chim ngẫu nhiên; Tidepool dùng nhiễu nâu tổng hợp làm sóng; file tải lười bằng `fetch` + `decodeAudioData` một lần, lỗi thì về nhiễu nâu; “không gian” = hai delay hồi tiếp dưới lọc thấp. `startMusic(id)` / `stopMusic()`; vào nhạc 4 s, ra 1,2 s. Khi `music.gain` ≈ 0 chỉ giữ nhịp, không dựng nốt |
+| `useAudio.ts` | `useMusic(theme)` cho trang game; `useSfx()` → `play(name, delayMs?)`; `useOnChange(value, fn)` để phản ứng với chuyển trạng thái của reducer mà không đưa âm thanh vào reducer |
+
+- Component game ánh xạ trạng thái → âm thanh: Lantern Line theo `moveCount` và `lastRemoved`; Ember & Tide theo `moveCount`; Tidepool theo `game.last` (`off` → clack + splash, `push` → clack, còn lại slide) và `sel.length`; Canopy theo `actionCount` + `game.last.kind` (+ `lit`) và `match.sel`. Kết quả ván: `winner` đổi → win / lose (chỉ khi máy thắng) / draw, trễ ~350 ms để kịp hiệu ứng đường thắng.
+- Nút trong `Toolbar`, `DifficultyPicker`, nút “?” và bánh răng phát `tap`. Thả thanh Sound effects phát `place` làm mẫu.
+- Controller 3D không biết gì về âm thanh (giữ hợp đồng “nhận view”). Sảnh không gọi `useMusic`, nên im lặng.
+- Kiểm chứng: `tests/audio.test.ts` (đường cong âm lượng, hợp âm nằm trong gam, random walk không rời gam); script dò bằng Playwright (không tạo context trước cú chạm, có node sau cú chạm, nhạc dừng khi về sảnh, không node khi slider 0, không cảnh báo console).

@@ -131,11 +131,17 @@ try {
   await playCells(page, [0, 3, 1, 4, 2]);
   check('X wins with a row', (await status(page)).includes('Player X wins'), await status(page));
   check('X score incremented', (await page.getByTestId('score-x').innerText()) === '1');
-  await page.waitForTimeout(1000);
+  // The result card comes in a moment after the winning line is shown.
+  const result = page.getByTestId('result');
+  await result.waitFor({ timeout: 3000 });
+  check('result card names the winner, the reason and the score', (await result.getByRole('heading').innerText()) === 'Player X wins!' && (await result.innerText()).includes('Three in a row') && (await result.innerText()).includes('1 – 0'));
+  check('result card has keyboard focus on “Play again”', await page.evaluate(() => document.activeElement?.textContent === 'Play again'));
+  await page.waitForTimeout(500);
   await page.screenshot({ path: `${SHOTS}/4-win.png` });
   await clickCell(page, 5);
   check('board locked after a win', (await cellText(page, 5)) === '·');
-  await page.getByRole('button', { name: 'New game' }).click();
+  await result.getByRole('button', { name: 'Play again' }).click();
+  check('“Play again” starts the next round and hides the card', (await result.count()) === 0);
   check('the loser (O) starts the next round', (await status(page)).includes('Player O’s turn'), await status(page));
 
   // --- vs computer
@@ -285,8 +291,13 @@ try {
   await clickColumn(page, 12);
   check('fire wins with a vertical line', (await status(page)).includes('Fire wins'), await status(page));
   check('fire score incremented', (await page.getByTestId('score-x').innerText()) === '1');
-  await page.waitForTimeout(1200);
+  const fwResult = page.getByTestId('result');
+  await fwResult.waitFor({ timeout: 3000 });
+  check('ember & tide: result card names Fire', (await fwResult.getByRole('heading').innerText()) === 'Fire wins!' && (await fwResult.innerText()).includes('Four in a row'));
+  await page.waitForTimeout(500);
   await page.screenshot({ path: `${SHOTS}/10-fire-water-win.png` });
+  await fwResult.getByRole('button', { name: 'View board' }).click();
+  check('ember & tide: “View board” hides the card and keeps the round', (await fwResult.count()) === 0 && (await status(page)).includes('Fire wins'));
   await clickColumn(page, 6);
   check('ember & tide: board locked after a win', (await stack(page, 6)) === '0');
 

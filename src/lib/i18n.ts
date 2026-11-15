@@ -35,6 +35,18 @@ const en = {
   loading: 'Loading',
   boardKeyboard: 'Board (keyboard)',
 
+  // ------------------------------------------------------------- round result
+  result: {
+    round: (n: number) => `Round ${n}`,
+    youWin: 'You win!',
+    computerWins: 'The computer wins',
+    sideWins: (name: string) => `${name} wins!`,
+    draw: 'It’s a draw',
+    score: 'Score',
+    playAgain: 'Play again',
+    viewBoard: 'View board',
+  },
+
   // ------------------------------------------------------------- how to play
   howToPlay: 'How to play',
   close: 'Close',
@@ -50,7 +62,7 @@ const en = {
   music: 'Music',
   sfx: 'Sound effects',
   muted: 'Off',
-  audioSoon: 'Music and sound effects are on the way. Your volume choices are saved for when they arrive.',
+  audioHint: 'Sound starts after your first tap on the page. The lobby stays quiet; each game has its own music.',
   done: 'Done',
 
   // ------------------------------------------------------------- site header / footer
@@ -112,6 +124,8 @@ const en = {
     square: (cell: string, what: string) => `Square ${cell}: ${what}`,
     aboutToVanish: ', about to vanish',
     empty: 'empty',
+    reasonWin: 'Three in a row',
+    reasonDraw: 'The same position came up three times',
   },
 
   // ------------------------------------------------------------- Ember & Tide
@@ -130,6 +144,8 @@ const en = {
     column: (row: number, col: number) => `Row ${row}, column ${col}`,
     empty: (cell: string) => `${cell}: empty`,
     stack: (cell: string, height: number, top: string) => `${cell}: stack of ${height}, ${top} on top`,
+    reasonWin: 'Four in a row',
+    reasonDraw: 'The board is full',
   },
 
   // ------------------------------------------------------------- Tidepool
@@ -156,6 +172,7 @@ const en = {
     marblesGroup: (name: string) => `${name} marbles`,
     marblesKeyboard: 'Marbles (keyboard)',
     movesGroup: 'Moves for the selected marbles',
+    reasonWin: (n: number) => `${n} marbles pushed into the sea`,
   },
 
   // ------------------------------------------------------------- Canopy
@@ -219,6 +236,17 @@ const vi: Dict = {
   loading: 'Đang tải',
   boardKeyboard: 'Bàn cờ (bàn phím)',
 
+  result: {
+    round: (n) => `Ván ${n}`,
+    youWin: 'Bạn thắng!',
+    computerWins: 'Máy thắng',
+    sideWins: (name) => `${name} thắng!`,
+    draw: 'Hoà',
+    score: 'Tỉ số',
+    playAgain: 'Chơi lại',
+    viewBoard: 'Xem bàn cờ',
+  },
+
   howToPlay: 'Cách chơi',
   close: 'Đóng',
   back: 'Trước',
@@ -232,7 +260,7 @@ const vi: Dict = {
   music: 'Nhạc nền',
   sfx: 'Hiệu ứng',
   muted: 'Tắt',
-  audioSoon: 'Nhạc nền và hiệu ứng âm thanh sẽ sớm có. Mức âm lượng bạn chọn được lưu lại để dùng khi ra mắt.',
+  audioHint: 'Âm thanh bắt đầu sau lần chạm đầu tiên vào trang. Sảnh không có nhạc; mỗi game có nhạc nền riêng.',
   done: 'Xong',
 
   mainNav: 'Điều hướng chính',
@@ -291,6 +319,8 @@ const vi: Dict = {
     square: (cell, what) => `Ô ${cell}: ${what}`,
     aboutToVanish: ', sắp biến mất',
     empty: 'trống',
+    reasonWin: 'Ba quân thẳng hàng',
+    reasonDraw: 'Cùng một thế cờ lặp lại ba lần',
   },
 
   fw: {
@@ -308,6 +338,8 @@ const vi: Dict = {
     column: (row, col) => `Hàng ${row}, cột ${col}`,
     empty: (cell) => `${cell}: trống`,
     stack: (cell, height, top) => `${cell}: chồng ${height} quân, trên cùng là ${top}`,
+    reasonWin: 'Bốn quân thẳng hàng',
+    reasonDraw: 'Bàn đã đầy',
   },
 
   tp: {
@@ -333,6 +365,7 @@ const vi: Dict = {
     marblesGroup: (name) => `Bi ${name}`,
     marblesKeyboard: 'Bi (bàn phím)',
     movesGroup: 'Các nước đi cho những viên bi đã chọn',
+    reasonWin: (n) => `Đã đẩy ${n} viên bi xuống biển`,
   },
 
   cn: {

@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import { useMusic, useOnChange, useSfx } from '@/lib/audio/useAudio';
 import { chooseColumn } from '@/lib/fire-water/ai';
 import type { AiReply } from '@/lib/fire-water/ai.worker';
 import { initialMatch, isAiTurn, matchReducer } from '@/lib/fire-water/match';
@@ -13,7 +14,7 @@ import type { FireWaterView } from '@/lib/scene/FireWaterController';
 import SceneLoader from './SceneLoader';
 import { FIRE_WATER_HELP } from './helpCards';
 import HowToPlay from './HowToPlay';
-import { DifficultyPicker, Divider, HudButtons, NoWebGL, Score, Scoreboard, StatusPill, TitleCard, Toolbar } from './Hud';
+import { DifficultyPicker, Divider, HudButtons, NoWebGL, ResultCard, Score, Scoreboard, StatusPill, TitleCard, Toolbar, type RoundResult } from './Hud';
 
 const AI_DELAY_MS = 650;
 const COLORS = { X: '#ff7a4d', O: '#5ab0ff', D: '#c3d6e3' };
@@ -25,6 +26,8 @@ export default function FireWaterGame() {
   const t = useT();
   const tf = t.fw;
   const NAME = tf.names;
+  useMusic('moon');
+  const sfx = useSfx();
   const [match, dispatch] = useReducer(matchReducer, undefined, () => initialMatch('ai', 'easy')); // opens against the computer, on Easy
   const [noGL, setNoGL] = useState(false);
   const [ready, setReady] = useState(false);
@@ -93,6 +96,13 @@ export default function FireWaterGame() {
   // The lobby's Play buttons return to the game played last.
   useEffect(() => rememberGame('ember-and-tide'), []);
 
+  useOnChange(game.moveCount, (n, was) => n > was && sfx('drop'));
+  useOnChange(game.winner, (w) => {
+    if (!w) return;
+    if (w === 'D') sfx('draw', 300);
+    else sfx(ai && w !== 'X' ? 'lose' : 'win', 350);
+  });
+
   const view = useMemo<FireWaterView>(
     () => ({
       board: game.board,
@@ -111,6 +121,21 @@ export default function FireWaterGame() {
   else if (ai) status = game.turn === 'X' ? tf.yourTurn : tf.thinking;
   else status = tf.sideTurn(NAME[game.turn]);
   const statusColor = COLORS[game.winner === 'D' ? 'D' : (game.winner ?? game.turn)];
+
+  const result = useMemo<RoundResult | null>(() => {
+    const w = game.winner;
+    if (!w) return null;
+    const names = { X: ai ? `${t.you} · ${NAME.X}` : NAME.X, O: ai ? `${t.cpu} · ${NAME.O}` : NAME.O };
+    const base = { score: `${names.X} ${scores.X} – ${scores.O} ${names.O}`, round: scores.X + scores.O + scores.D };
+    if (w === 'D') return { ...base, tone: 'draw', title: t.result.draw, detail: tf.reasonDraw };
+    return {
+      ...base,
+      tone: ai ? (w === 'X' ? 'win' : 'lose') : 'win',
+      title: ai ? (w === 'X' ? t.result.youWin : t.result.computerWins) : t.result.sideWins(NAME[w]),
+      detail: tf.reasonWin,
+      icon: w === 'X' ? <FireIcon /> : <WaterIcon />,
+    };
+  }, [game.winner, ai, scores, t, tf, NAME]);
 
   const columnLabel = (col: number) => {
     const name = tf.column(Math.floor(col / SIZE) + 1, (col % SIZE) + 1);
@@ -143,6 +168,7 @@ export default function FireWaterGame() {
         </div>
 
         {noGL && <NoWebGL />}
+        <ResultCard result={result} gameId={match.gameId} onPlayAgain={() => dispatch({ type: 'newGame' })} />
 
         <div className="hud-bottom">
           <StatusPill color={statusColor} status={status} />

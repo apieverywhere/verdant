@@ -27,3 +27,5 @@
   - Kiểm chứng: `e2e/smoke.ts` (“opens against the computer”, “Easy is the default” cho từng game).
 - [x] **T22. Nút Cài đặt trong HUD và header** — `HudButtons`; đổi thẻ “Settings” trên điện thoại thành “Options”. _(G1.2, G1.3; xem [settings-i18n](../settings-i18n/))_
 - [x] **T23. Chụp lại ảnh `e2e/screenshots/`** có nút Cài đặt và thẻ “Options” (15/11/2026).
+- [x] **T24. Thẻ kết quả ván** — `ResultCard` trong `Hud.tsx`, nối vào bốn game; chuỗi `result.*` và `reasonWin` / `reasonDraw` trong `i18n.ts`. _(G1.11)_
+  - Kiểm chứng: `e2e/smoke.ts` (thẻ nêu người thắng, lý do và tỉ số; focus ở “Play again”; “Play again” mở ván mới và ẩn thẻ; “View board” ẩn thẻ mà giữ ván; ảnh `4-win.png`, `10-fire-water-win.png`).

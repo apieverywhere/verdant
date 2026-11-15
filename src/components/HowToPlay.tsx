@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState, type ReactNode } from 'react';
+import { useSfx } from '@/lib/audio/useAudio';
 import { useT, type Localized } from '@/lib/i18n';
 import { useSettings } from '@/lib/settings';
 
@@ -18,12 +19,14 @@ export interface HelpCard {
 export default function HowToPlay({ subtitle, cards }: { subtitle: string; cards: HelpCard[] }) {
   const ref = useRef<HTMLDialogElement>(null);
   const t = useT();
+  const sfx = useSfx();
   const { lang } = useSettings();
   const [step, setStep] = useState(0);
   const last = cards.length - 1;
   const card = cards[step];
 
   const open = () => {
+    sfx('tap');
     setStep(0);
     ref.current?.showModal();
   };

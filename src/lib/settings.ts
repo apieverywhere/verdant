@@ -82,7 +82,7 @@ export function updateSettings(patch: Partial<Settings>) {
   listeners.forEach((l) => l());
 }
 
-function subscribe(onChange: () => void) {
+export function subscribeSettings(onChange: () => void) {
   listeners.add(onChange);
   // A change made in another tab applies here too.
   const onStorage = (e: StorageEvent) => e.key === KEY && onChange();
@@ -94,5 +94,5 @@ function subscribe(onChange: () => void) {
 }
 
 export function useSettings(): Settings {
-  return useSyncExternalStore(subscribe, getSettings, () => DEFAULT_SETTINGS);
+  return useSyncExternalStore(subscribeSettings, getSettings, () => DEFAULT_SETTINGS);
 }

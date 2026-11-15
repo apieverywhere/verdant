@@ -35,3 +35,4 @@
 - **G1.8** Chuyển qua lại giữa các trang nhiều lần không được làm rò rỉ WebGL context.
 - **G1.9** Không có WebGL thì hiện thông báo và vẫn chơi được bằng bàn phím (Tab).
 - **G1.10** Mỗi game có bàn điều khiển bàn phím ẩn (hiện khi được focus) với `aria-label` mô tả từng ô, quân hoặc nước đi.
+- **G1.11** KHI một ván kết thúc THÌ, sau khoảng 1 s (để kịp thấy hiệu ứng đường thắng), hệ thống PHẢI hiện thẻ kết quả giữa màn hình: số ván, ai thắng (hoặc hoà) với biểu tượng phe, lý do kết thúc, tỉ số hiện tại, nút “Play again” (được focus) và “View board”. Thẻ không phải modal: cảnh phía sau vẫn xoay được; đóng bằng “View board”, nút ×, Esc hoặc khi ván mới bắt đầu. Màu viền theo kết quả (vàng khi thắng, san hô khi máy thắng).

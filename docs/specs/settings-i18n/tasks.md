@@ -20,11 +20,18 @@
 - [ ] **T11. Privacy Policy nhắc tới `verdant:settings`** — xem [site-seo T9](../site-seo/tasks.md). _(S2.2)_
 - [ ] **T12. (Tuỳ chọn) Bỏ khoảnh khắc chữ tiếng Anh khi tải trang** — ví dụ ẩn chữ cho tới khi hydrate, hoặc route theo ngôn ngữ (`/vi/...`) nếu cần SEO tiếng Việt. Cân nhắc kỹ vì sẽ đổi cấu trúc route. _(I1.7)_
 
-## Âm thanh (phát triển sau)
+## Âm thanh (15/11/2026)
 
-- [ ] **T13. Chốt danh sách âm thanh và nguồn** — nhạc nền cho 4 cảnh (và sảnh?), hiệu ứng theo A1.3; giấy phép. _(A1.2, A1.3)_
-- [ ] **T14. Module `src/lib/audio.ts`** — `AudioContext` chung, hai `GainNode`, theo dõi kho cài đặt, mở khoá sau tương tác đầu tiên, dừng khi tab ẩn. _(A1.4–A1.7)_
-  - Kiểm chứng: unit test cho công thức gain và trạng thái khoá; E2E kiểm tra không có lỗi console khi chưa có file âm thanh.
-- [ ] **T15. Hiệu ứng trong các game** — `useSfx()`, gọi ở nước đi / thắng / thua / hoà / bấm nút cho cả bốn game. _(A1.3)_
-- [ ] **T16. Nhạc nền theo cảnh.** _(A1.2)_
-- [ ] **T17. Bỏ ghi chú “sắp có” trong hộp thoại** khi âm thanh đã chạy; cập nhật README.
+- [x] **T13. Quyết định nguồn** — tổng hợp bằng Web Audio, không dùng file; sảnh không có âm thanh. _(A1.2, A1.3b)_
+- [x] **T14. Engine** `src/lib/audio/engine.ts` — context chung, hai kênh gain, theo dõi cài đặt, mở khoá sau cú chạm đầu, dừng khi tab ẩn. _(A1.1, A1.4–A1.7)_
+  - Kiểm chứng: `tests/audio.test.ts` (`gainFor`); script dò Playwright (không có context trước cú chạm, không cảnh báo console).
+- [x] **T15. Hiệu ứng** `src/lib/audio/sfx.ts` + `useOnChange` trong bốn component game, `tap` cho nút HUD, mẫu khi thả thanh trượt. _(A1.3)_
+- [x] **T16. Nhạc theo cảnh** `src/lib/audio/music.ts` — 4 theme, scheduler lookahead, ambience, vào/ra êm, im khi slider 0. _(A1.2, A1.5)_
+  - Kiểm chứng: `tests/audio.test.ts` (hợp âm trong gam, random walk); script dò (nhạc chạy tiếp sau 6 s, dừng khi về sảnh, 0 node khi tắt nhạc).
+- [x] **T17. Ghi chú trong hộp thoại** đổi thành “âm thanh bắt đầu sau lần chạm đầu tiên; sảnh không có nhạc”; README cập nhật.
+- [x] **T17b. Tiếng gió thật** — thay lớp gió tổng hợp bằng bản ghi Pixabay (yêu cầu của tác giả sau khi nghe), `public/audio/wind.mp3`, fallback tổng hợp. _(A1.3b)_
+  - Kiểm chứng: script dò (sảnh không tải file; ba game trên cạn tải và decode được 39,8 s; Tidepool không tải; không lỗi console).
+- [x] **T18a. Tiếng thắng làm lại** sau khi nghe thử: fanfare ~2 s nhiều lớp (whoosh, va đập, arpeggio, hợp âm sawtooth swell, lấp lánh, nốt cao ngân) theo gam của nhạc nền cảnh (`fanfareRootHz`, cảnh thứ dùng trưởng tương đối). Kiểm chứng: `tests/audio.test.ts` dựng mọi hiệu ứng trên AudioContext giả.
+- [ ] **T18. Nghe và tinh chỉnh** — mình chỉ kiểm được bằng máy (node, trạng thái, không lỗi), chưa nghe được. Cần người nghe thử từng cảnh trên loa và tai nghe, chỉnh `TUNE`-kiểu: gain pad/lead/ambience, mật độ giai điệu, âm sắc hiệu ứng (`sfx.ts`), độ dài fade.
+- [ ] **T19. E2E cho âm thanh** — đưa script dò vào `e2e/smoke.ts` (đếm oscillator, trạng thái context, dừng khi về sảnh).
+- [ ] **T20. (Tuỳ chọn) Tôn trọng `prefers-reduced-motion`?** Không áp dụng cho âm thanh; cân nhắc một nút tắt nhanh trong HUD nếu người chơi hay cần tắt gấp.

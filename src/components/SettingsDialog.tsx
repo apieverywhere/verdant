@@ -6,6 +6,8 @@
  * at once, so there is no Cancel.
  */
 import { useEffect, useId, useRef, type CSSProperties } from 'react';
+import { useSfx } from '@/lib/audio/useAudio';
+import { playSfx } from '@/lib/audio/sfx';
 import { LANG_NAMES, useT } from '@/lib/i18n';
 import { LANGS, updateSettings, useSettings } from '@/lib/settings';
 
@@ -14,11 +16,12 @@ export default function SettingsDialog({ className = 'cbtn settings-btn' }: { cl
   const t = useT();
   const settings = useSettings();
   const titleId = useId();
+  const sfx = useSfx();
   const close = () => ref.current?.close();
 
   return (
     <>
-      <button type="button" className={className} aria-label={t.settings} title={t.settings} onClick={() => ref.current?.showModal()}>
+      <button type="button" className={className} aria-label={t.settings} title={t.settings} onClick={() => { sfx('tap'); ref.current?.showModal(); }}>
         <GearIcon />
       </button>
       <dialog
@@ -59,8 +62,9 @@ export default function SettingsDialog({ className = 'cbtn settings-btn' }: { cl
           <section className="settings-group">
             <h3>{t.sound}</h3>
             <VolumeSlider label={t.music} off={t.muted} value={settings.music} onChange={(music) => updateSettings({ music })} />
-            <VolumeSlider label={t.sfx} off={t.muted} value={settings.sfx} onChange={(sfx) => updateSettings({ sfx })} />
-            <p className="settings-note">{t.audioSoon}</p>
+            {/* Letting go of the effects slider plays a sample, so the level can be judged. */}
+            <VolumeSlider label={t.sfx} off={t.muted} value={settings.sfx} onChange={(sfx) => updateSettings({ sfx })} onCommit={() => playSfx('place')} />
+            <p className="settings-note">{t.audioHint}</p>
           </section>
 
           <div className="settings-foot">
@@ -72,7 +76,7 @@ export default function SettingsDialog({ className = 'cbtn settings-btn' }: { cl
   );
 }
 
-function VolumeSlider({ label, off, value, onChange }: { label: string; off: string; value: number; onChange: (v: number) => void }) {
+function VolumeSlider({ label, off, value, onChange, onCommit }: { label: string; off: string; value: number; onChange: (v: number) => void; onCommit?: () => void }) {
   const id = useId();
   const shown = value === 0 ? off : `${value}%`;
   return (
@@ -88,6 +92,8 @@ function VolumeSlider({ label, off, value, onChange }: { label: string; off: str
         aria-valuetext={shown}
         style={{ '--fill': `${value}%` } as CSSProperties}
         onChange={(e) => onChange(Number(e.target.value))}
+        onPointerUp={onCommit}
+        onKeyUp={onCommit}
       />
       <output htmlFor={id}>{shown}</output>
     </div>

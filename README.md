@@ -14,7 +14,13 @@ Sảnh game 3D chơi ngay trên trình duyệt. Cảnh low‑poly dựng bằng 
 ![Sảnh game](e2e/screenshots/7-lobby.png)
 
 Mọi game mở ở chế độ đấu máy, mức Dễ. Nút **Cài đặt** (bánh răng, trên header và trong mỗi game) cho chọn
-ngôn ngữ **English / Tiếng Việt** và chỉnh âm lượng nhạc nền, hiệu ứng (âm thanh sẽ có sau; mức chọn được lưu sẵn).
+ngôn ngữ **English / Tiếng Việt** và chỉnh âm lượng nhạc nền, hiệu ứng. Nhạc và hiệu ứng được **tổng hợp bằng Web Audio**
+(`src/lib/audio/`): mỗi cảnh một theme ambient riêng (hoàng hôn, hồ băng, đầm phá, rừng bình minh), chỉ phát trong trang
+game sau lần chạm đầu tiên; sảnh im lặng. File âm thanh duy nhất là tiếng gió nền `public/audio/wind.mp3`.
+
+**Nguồn âm thanh:** “Wind Blowing” của [SoundReality](https://pixabay.com/users/soundreality-31074404/) trên
+[Pixabay](https://pixabay.com/sound-effects/nature-wind-blowing-457954/), giấy phép Pixabay Content License (miễn phí, không bắt buộc ghi công);
+được cắt thành vòng lặp liền mạch, chuyển mono và chuẩn hoá âm lượng bằng ffmpeg.
 
 ## Chạy nhanh
 
@@ -30,7 +36,7 @@ bun run start        # chạy bản production (thêm -p 3123 để đổi cổn
 ## Kiểm thử
 
 ```bash
-bun test             # 128 unit test: luật chơi, luồng trận, AI của cả bốn game
+bun test             # 131 unit test: luật chơi, luồng trận, AI của cả bốn game, âm thanh
 bun run typecheck    # TypeScript strict
 bun run verify:ai    # kiểm tra AI mức Khó tối ưu trên TOÀN BỘ 133 364 thế cờ (~5 phút)
 bun run e2e          # E2E bằng Chrome headless (cần server đang chạy ở cổng 3123)
@@ -135,6 +141,8 @@ src/lib/fire-water/      Ember & Tide: rules, match, ai
 src/lib/tidepool/        Tidepool: rules, match, ai
 src/lib/canopy/          Canopy: rules, match, ai, search
 src/lib/settings.ts, i18n.ts  cài đặt (ngôn ngữ, âm lượng) và từ điển Anh/Việt
+src/lib/audio/           engine (AudioContext, kênh nhạc / hiệu ứng), sfx (hiệu ứng tổng hợp), music (4 theme ambient), hook React
+public/audio/wind.mp3    tiếng gió nền (Pixabay, xem Nguồn âm thanh)
 src/lib/scene/           SceneController, FireWaterController, TidepoolController, CanopyController (three.js), geometry, terrain, shaders, trees
 tests/                   bun test + bộ giải chính xác
 scripts/verify-ai.ts     kiểm tra AI toàn bộ thế cờ

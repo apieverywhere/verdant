@@ -36,6 +36,7 @@
 - Màu lấy từ biến CSS. Class trên `.stage` (`.moon`, `.lagoon`, `.forest`) đổi bộ biến theo cảnh, nên không có CSS riêng cho từng game.
 - `Toolbar` trên điện thoại thu vào thẻ “Options” (`aria-expanded`), bấm New game thì tự đóng.
 - Mọi chữ lấy từ `useT()` (xem [settings-i18n](../settings-i18n/design.md)).
+- `ResultCard` (G1.11): nhận `RoundResult { tone, title, detail, score, round, icon }` do component game tính bằng `useMemo` từ `winner` / `reason` / tỉ số, cùng `gameId` để đặt lại trạng thái ẩn khi sang ván mới. Hiện sau 1,1 s (`setTimeout`), focus vào “Play again”; `role="dialog"` không modal, `data-testid="result"`. Nằm trong `.hud` nhưng lớp `.result-wrap` phủ toàn stage với `pointer-events: none`, chỉ thẻ nhận chuột, nên cảnh vẫn kéo xoay được quanh thẻ. Nút trên thẻ tên “Play again” để không trùng với “New game” của thanh công cụ (selector E2E).
 
 ## 5. Luồng trận dùng chung
 

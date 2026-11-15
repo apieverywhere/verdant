@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import { useMusic, useOnChange, useSfx } from '@/lib/audio/useAudio';
 import { chooseTurn } from '@/lib/canopy/ai';
 import type { AiReply } from '@/lib/canopy/ai.worker';
 import { initialMatch, isAiTurn, matchReducer } from '@/lib/canopy/match';
@@ -14,7 +15,7 @@ import type { CanopyView } from '@/lib/scene/CanopyController';
 import SceneLoader from './SceneLoader';
 import { CANOPY_HELP } from './helpCards';
 import HowToPlay from './HowToPlay';
-import { DifficultyPicker, Divider, HudButtons, NoWebGL, Score, Scoreboard, StatusPill, TitleCard, Toolbar } from './Hud';
+import { DifficultyPicker, Divider, HudButtons, NoWebGL, ResultCard, Score, Scoreboard, StatusPill, TitleCard, Toolbar, type RoundResult } from './Hud';
 
 /** Shortest "thinking" pause before the computer steps, and the pause before each later part of its turn. */
 const AI_DELAY_MS = 650;
@@ -29,6 +30,8 @@ export default function CanopyGame() {
   const tc = t.cn;
   const NAME = tc.names;
   const STAGE_NAMES = tc.stages;
+  useMusic('forest');
+  const sfx = useSfx();
   const cellName = (cell: number) => tc.cell(rowOf(cell) + 1, colOf(cell) + 1);
   const [match, dispatch] = useReducer(matchReducer, undefined, () => initialMatch('ai', 'easy')); // opens against the computer, on Easy
   const [noGL, setNoGL] = useState(false);
@@ -116,6 +119,19 @@ export default function CanopyGame() {
   // The lobby's Play buttons return to the game played last.
   useEffect(() => rememberGame('canopy'), []);
 
+  // Sounds follow each part of a turn: the hop (and a lantern), the tile growing, the tree cut back.
+  useOnChange(game.actionCount, () => {
+    const l = game.last;
+    if (!l) return;
+    if (l.kind === 'step') {
+      sfx('hop');
+      if (l.lit) sfx('lantern', 160);
+    } else if (l.kind === 'grow') sfx('grow');
+    else if (l.kind === 'cut') sfx('cut');
+  });
+  useOnChange(match.sel, (s) => s >= 0 && sfx('tap'));
+  useOnChange(game.winner, (w) => w && sfx(ai && w !== 'X' ? 'lose' : 'win', 350));
+
   // The climber in hand: the one picked up before stepping, or the one that just stepped and now grows and cuts.
   const sel = game.phase === 'move' ? match.sel : game.active;
   const targets = useMemo<number[]>(() => {
@@ -177,6 +193,20 @@ export default function CanopyGame() {
   else status = `${ai ? tc.yourTurn : tc.sideTurn(NAME[game.turn])} · ${tc.pickClimber}`;
   const statusColor = COLORS[game.winner ?? game.turn];
 
+  const result = useMemo<RoundResult | null>(() => {
+    const w = game.winner;
+    if (!w) return null;
+    const names = { X: ai ? `${t.you} · ${NAME.X}` : NAME.X, O: ai ? `${t.cpu} · ${NAME.O}` : NAME.O };
+    return {
+      tone: ai ? (w === 'X' ? 'win' : 'lose') : 'win',
+      title: ai ? (w === 'X' ? t.result.youWin : t.result.computerWins) : t.result.sideWins(NAME[w]),
+      detail: game.reason === 'stuck' ? tc.stuck(NAME[other(w)]) : tc.twoLit,
+      score: `${names.X} ${wins.X} – ${wins.O} ${names.O}`,
+      round: wins.X + wins.O,
+      icon: w === 'X' ? <ClimberIcon body="#ffb347" head="#ffe0a8" /> : <ClimberIcon body="#8a7cf5" head="#d2cbff" />,
+    };
+  }, [game.winner, game.reason, ai, wins, t, tc, NAME]);
+
   const targetLabel = (cell: number) => {
     const stage = game.level[cell];
     if (game.phase === 'grow') return tc.growLabel(cellName(cell), STAGE_NAMES[stage], STAGE_NAMES[stage + 1]);
@@ -221,6 +251,7 @@ export default function CanopyGame() {
         </div>
 
         {noGL && <NoWebGL />}
+        <ResultCard result={result} gameId={match.gameId} onPlayAgain={() => dispatch({ type: 'newGame' })} />
 
         <div className="hud-bottom">
           <StatusPill color={statusColor} status={status} />
